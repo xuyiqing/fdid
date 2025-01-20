@@ -1,0 +1,4 @@
+exportPattern("^[[:alpha:]]+")
+importFrom(graphics, plot)
+export(fdid)
+S3method("plot", "fdid")

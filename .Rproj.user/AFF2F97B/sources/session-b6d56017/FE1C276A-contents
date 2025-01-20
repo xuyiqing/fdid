@@ -1,0 +1,166 @@
+#' Dynamic FDID with Single-Year Baseline
+#'
+#' @description For each year \code{t} in \code{period}, compute
+#'   \eqn{tempY = Y(t) - Y(last\_ref)} where \code{last_ref = max(ref_period)},
+#'   then run one of the five methods (\code{"did"}, \code{"ols1"}, \code{"ols2"},
+#'   \code{"ebal"}, or \code{"aipw"}), using variance type \code{"robust"},
+#'   \code{"bootstrap"}, or \code{"jackknife"}.
+#'   This matches the single-year baseline logic of \code{fdid()}, but
+#'   produces a dynamic (multi-year) estimate table.
+#'
+#' @param s A wide-format dataframe from \code{fdid_prepare()},
+#'   containing columns:
+#'   \itemize{
+#'     \item \code{G} for treatment
+#'     \item optional \code{c} for clustering
+#'     \item \code{x1,x2,...} covariates
+#'     \item numeric year columns like \code{"1954","1955",...}
+#'   }
+#' @param period Numeric vector of all years to estimate.
+#' @param ref_period Numeric vector of reference years, from which we pick
+#'   \code{last_ref = max(ref_period)} as the single baseline. For that
+#'   \code{last_ref}, the effect is forced to zero.
+#' @param method One of \code{"did"}, \code{"ols1"} (default),
+#'   \code{"ols2"}, \code{"ebal"}, or \code{"aipw"}.
+#' @param vartype One of \code{"robust"}, \code{"bootstrap"}, or \code{"jackknife"}.
+#' @param cluster Name of cluster column if clustering is desired (e.g. \code{"c"}).
+#'   If \code{NULL}, no clustering is done.
+#' @param na.rm If \code{TRUE}, remove rows with missing data in outcome, treat,
+#'   covariates, or cluster.
+#' @param nsims Number of bootstrap or jackknife replications if
+#'   \code{vartype != "robust"}.
+#' @param parallel If \code{TRUE}, run bootstrap/jackknife in parallel.
+#' @param cores Number of cores if \code{parallel=TRUE}.
+#'
+#' @return An object of class \code{"fdid_dyn"}, containing
+#'   \itemize{
+#'     \item \code{$estimates}: a data.frame of dimension
+#'       \(\text{length}(period) \times 4\), with columns
+#'       \code{Estimate, Std.Error, CI_Lower, CI_Upper}.
+#'     \item \code{$period}, \code{$ref_period}, \code{$method}, \code{$vartype}, etc.
+#'   }
+#'
+#' @examples
+#' \dontrun{
+#' dyn_results <- fdid_dyn(
+#'   s          = prepared_data,
+#'   period     = 1954:1966,
+#'   ref_period = 1954:1957,  # picks last => 1957
+#'   method     = "did",
+#'   vartype    = "robust",
+#'   cluster    = "c",
+#'   na.rm      = TRUE
+#' )
+#' print(dyn_results$estimates)
+#' }
+#'
+#' @export
+fdid_dyn <- function(
+    s,
+    period,
+    ref_period,
+    method   = "ols1",
+    vartype  = "robust",
+    cluster  = NULL,
+    na.rm    = FALSE,
+    nsims    = 1000,
+    parallel = FALSE,
+    cores    = 2
+) {
+
+  ## 1) Validate input
+  stopifnot(is.data.frame(s))
+  valid_methods <- c("did","ols1","ols2","ebal","aipw")
+  if (!method %in% valid_methods) {
+    stop("method must be one of: ", paste(valid_methods, collapse=", "))
+  }
+  valid_vartypes <- c("robust","bootstrap","jackknife")
+  if (!vartype %in% valid_vartypes) {
+    stop("vartype must be one of: ", paste(valid_vartypes, collapse=", "))
+  }
+  if (!"G" %in% names(s)) {
+    stop("No 'G' column found in s. Did fdid_prepare rename it to G?")
+  }
+
+  # Covariates named x1,x2,...
+  covar <- grep("^x\\d+$", names(s), value=TRUE)
+
+  ## 2) Force single-year baseline if multiple
+  last_ref <- max(ref_period)  # pick the last reference year
+
+  # If user wants to drop rows with missing G, covars, cluster globally:
+  needed_cols <- c("G", covar)
+  if (!is.null(cluster)) needed_cols <- c(needed_cols, cluster)
+  if (na.rm) {
+    s <- s[complete.cases(s[, needed_cols, drop=FALSE]), ]
+  }
+
+  ## 3) Prepare parallel backend if needed
+  if (parallel && (vartype %in% c("bootstrap", "jackknife"))) {
+    library(doParallel)
+    cl <- makeCluster(cores)
+    registerDoParallel(cl)
+    on.exit(stopCluster(cl))
+  }
+
+  ## 4) Initialize storage for estimates
+  estimates <- data.frame(
+    Estimate   = numeric(length(period)),
+    Std.Error  = numeric(length(period)),
+    CI_Lower   = numeric(length(period)),
+    CI_Upper   = numeric(length(period)),
+    row.names  = as.character(period)
+  )
+
+  ## 5) Iterate over each year in period
+  for (i in seq_along(period)) {
+    t <- period[i]
+    t_col <- as.character(t)
+    ref_col <- as.character(last_ref)
+
+    if (!(t_col %in% names(s))) {
+      stop("Year column '", t_col, "' not found in data.")
+    }
+    if (!(ref_col %in% names(s))) {
+      stop("Reference year column '", ref_col, "' not found in data.")
+    }
+
+    if (t == last_ref) {
+      estimates[i, ] <- c(0, 0, 0, 0)
+    } else {
+      # Define treatment period as the single year t
+      tr_period_t <- t
+      ref_period_t <- last_ref
+
+      # Call fdid for this specific year
+      fdid_result <- fdid(
+        s          = s,
+        tr_period  = tr_period_t,
+        ref_period = ref_period_t,
+        method     = method,
+        vartype    = vartype,
+        cluster    = cluster,
+        na.rm      = na.rm,
+        nsims      = nsims,
+        parallel   = parallel,
+        cores      = cores
+      )
+
+      # Extract estimates
+      estimates[i, ] <- fdid_result$result[c("Estimate", "Std.Error", "CI_Lower", "CI_Upper")]
+    }
+  }
+
+  ## 6) Compile output
+  out <- list(
+    estimates   = estimates,
+    method      = method,
+    vartype     = vartype,
+    period      = period,
+    ref_period  = ref_period,    # e.g. if user gave 1954:1957, we used 1957
+    last_ref    = last_ref,      # single baseline
+    call        = match.call()
+  )
+  class(out) <- "fdid_dyn"
+  return(out)
+}

@@ -1,0 +1,235 @@
+set.seed(12345)  # Choose an arbitrary seed
+
+## be quiet!
+quiet <- function(x) {
+  sink(tempfile())
+  on.exit(sink())
+  invisible(force(x))
+}
+
+###############################################
+# Various estimators
+###############################################
+
+
+library(estimatr)
+
+
+# difference in means
+diff <- function(data, Y, treat) {
+    #data <- data[complete.cases(data[, c(Y, treat)]),]
+    fml <- as.formula(paste(Y, "~", treat))
+    out <- summary(lm_robust(fml, data = data, se_type = "stata"))$coefficients[treat, c(1, 2, 5, 6)]
+    return(out) # extract coef, se, ci.lower, ci.upper
+}
+
+
+# regression adjustment
+reg <- function(data, Y, treat, covar) {
+    #data <- data[complete.cases(data[, c(Y, treat, covar)]),]
+    fml <- as.formula(paste(Y, "~", treat, "+", paste(covar, collapse = " + ")))
+    out <- summary(lm_robust(fml, data = data, se_type = "stata"))$coefficients[treat, c(1, 2, 5, 6)]
+    # extract coef, se, ci.lower, ci.upper
+    return(out)
+}
+
+# Lin estimator
+lin <- function(data, Y, treat, covar){
+  ## treatment and outcome
+  Z = data[, treat]
+  Y = data[, Y]
+  ## standardize covariates
+  X = data[, covar]
+  X = scale(X)
+  n = dim(X)[1]
+  p = dim(X)[2]
+
+  ## fully interacted OLS
+  linreg = lm(Y ~ Z * X)
+  est    = coef(linreg)[2]
+  vehw   = car::hccm(linreg)[2, 2]
+
+  ## super population correction
+  inter  = coef(linreg)[(p+3):(2*p+2)]
+  sesuper = sqrt(vehw + sum(inter*(cov(X)%*%inter))/n)
+
+  out <- c(est, sesuper, est - 1.96*sesuper, est + 1.96*sesuper)
+  return(out)
+}
+
+
+
+# $$$$$$$$\  $$$$$$\ $$$$$$$$\        $$$$$$\  $$\       $$\
+# $$  _____|$$  __$$\\__$$  __|      $$  __$$\ $$ |      $$ |
+# $$ |      $$ /  \__|  $$ |         $$ /  $$ |$$ |      $$ |
+# $$$$$\    \$$$$$$\    $$ |         $$$$$$$$ |$$ |      $$ |
+# $$  __|    \____$$\   $$ |         $$  __$$ |$$ |      $$ |
+# $$ |      $$\   $$ |  $$ |         $$ |  $$ |$$ |      $$ |
+# $$$$$$$$\ \$$$$$$  |  $$ |         $$ |  $$ |$$$$$$$$\ $$$$$$$$\
+# \________| \______/   \__|         \__|  \__|\________|\________|
+
+
+## estimate all
+est.all <- function(data, Y, treat, covar, ref_period, tr_period,
+    methods = c("diff", "reg", "lin")) {
+
+  Y.raw <- Y
+  Y_exposed <- paste0(Y, tr_period)
+  Y_reference <- paste0(Y, ref_period)
+  if (length(ref_period) == 1) {
+    data[, Y] <- rowMeans(data[, Y_exposed]) - data[, Y_reference]
+  } else {
+    data[, Y] <- rowMeans(data[, Y_exposed]) - rowMeans(data[, Y_reference])
+  }
+
+  results <- as.data.frame(matrix(NA, length(methods), 4))
+  rownames(results) <- methods
+  colnames(results) <- c("Estimate", "SE", "CI_lower", "CI_upper")
+  m <- 1
+  if ("diff" %in% methods) {
+    results[m, ] <- diff(data, Y, treat)
+    m <- m + 1
+  }
+  if ("reg" %in% methods) {
+    results[m, ] <- reg(data, Y, treat, covar)
+    m <- m + 1
+  }
+  if ("lin" %in% methods) {
+    results[m, ] <- lin(data, Y, treat, covar)
+    m <- m + 1
+  }
+  return(results)
+}
+
+
+# bootstrap wrapper around est.dyn
+est.all.boot <- function(data, Y, treat, covar, ref_period, tr_period, methods = c("diff", "reg", "lin"),
+  nsim = 1000, parallel = TRUE, cores = 10) {
+
+  # point estimate
+  est <- est.all(data, Y, treat, covar, ref_period, tr_period, methods)[,1]
+
+  one.boot <- function() {
+    data.boot <- data[sample(1:nrow(data), replace = TRUE), ]
+    return(est.all(data.boot, Y, treat, covar, ref_period, tr_period, methods)[,1])
+  }
+
+  if (parallel == FALSE) {
+    boot.out <- matrix(NA, nsim, TT)
+    for (i in 1:nsim) {
+      boot.out[i,] <- one.boot()
+      if (i %% 100 == 0) {cat(".")}
+    }
+  } else { # parallel computing
+    library(future)
+    library(doParallel)
+    cl2 <- future::makeClusterPSOCK(cores, verbose = F)
+    doParallel::registerDoParallel(cl2)
+    boot.out <- foreach (i=1:nsim,.combine=rbind,.inorder=FALSE,
+      .export = c("diff", "reg", "lin", "est.all"),
+      .packages = c("estimatr", "car")) %dopar% {
+      return(one.boot())
+    }
+    stopCluster(cl2)
+  }
+  # summarize
+  se <- apply(boot.out, 2, sd)
+  ci <- t(apply(boot.out, 2, function(x) quantile(x, probs = c(0.025, 0.975))))
+  out <- cbind.data.frame(est, se, ci)
+  colnames(out) <- c("est", "se", "ci_l", "ci_h")
+  return(out)
+}
+
+
+
+
+
+#       $$\
+#       $$ |
+#  $$$$$$$ |$$\   $$\ $$$$$$$\
+# $$  __$$ |$$ |  $$ |$$  __$$\
+# $$ /  $$ |$$ |  $$ |$$ |  $$ |
+# $$ |  $$ |$$ |  $$ |$$ |  $$ |
+# \$$$$$$$ |\$$$$$$$ |$$ |  $$ |
+#  \_______| \____$$ |\__|  \__|
+#           $$\   $$ |
+#           \$$$$$$  |
+#            \______/
+
+est.dyn <- function(data, Y, treat, covar, period, base.period, estimator = "lin") {
+  TT <- length(period)
+  Ys <- paste0(Y, period)
+  out <- matrix(NA, TT, 4) # est, se, ci1, ci2
+  rownames(out) <- period
+  colnames(out) <- c("est", "se", "ci_l", "ci_h")
+  for (i in 1:TT) {
+    if (period[i] == base.period) {
+      out[i, ] <- c(0, 0, 0, 0)
+      next
+    }
+    if (length(base.period)==1) {
+      data[ ,"tempY"] <- data[, Ys[i]] - data[, paste0(Y,base.period)]
+    } else {
+      data[ ,"tempY"] <- data[, Ys[i]] - rowMeans(data[, paste0(Y,base.period)])
+    }
+    if (estimator == "aipw") {
+      out[i, ] <- aipw(data, "tempY", treat, covar)
+    }
+    if (estimator == "diff") {
+      out[i, ] <- diff(data, "tempY", treat)
+    }
+    if (estimator == "twfe1") {
+      out[i, ] <- reg(data, "tempY", treat, covar)
+    }
+    if (estimator == "twfe2") {
+      out[i, ] <- om.reg(data, "tempY", treat, covar)
+    }
+    if (estimator == "ipw") {
+      out[i, ] <- ipw(data, "tempY", treat, covar)
+    }
+    if (estimator == "lin") {
+      out[i, ] <- lin(data, "tempY", treat, covar)
+    }
+  }
+  return(out)
+}
+
+# bootstrap wrapper around est.dyn
+est.dyn.boot <- function(data, Y, treat, covar, period, base.period, estimator = "diff", nsim = 1000, parallel = TRUE, cores = 10) {
+
+
+  TT <- length(period)
+  # point estimate
+  est <- est.dyn(data, Y, treat, covar, period, base.period, estimator)[,1]
+
+  one.boot <- function() {
+    data.boot <- data[sample(1:nrow(data), replace = TRUE), ]
+    return(est.dyn(data.boot, Y, treat, covar, period, base.period, estimator)[,1])
+  }
+
+  if (parallel == FALSE) {
+    boot.out <- matrix(NA, nsim, TT)
+    for (i in 1:nsim) {
+      boot.out[i,] <- one.boot()
+      if (i %% 100 == 0) {cat(".")}
+    }
+  } else { # parallel computing
+    library(future)
+    library(doParallel)
+    cl2 <- future::makeClusterPSOCK(cores, verbose = F)
+    doParallel::registerDoParallel(cl2)
+    boot.out <- foreach (i=1:nsim,.combine=rbind,.inorder=FALSE,
+      .export = c("diff", "reg", "om.reg", "ipw", "aipw","est.dyn"),
+      .packages = c("estimatr", "grf")) %dopar% {
+      return(one.boot())
+    }
+    stopCluster(cl2)
+  }
+  # summarize
+  se <- apply(boot.out, 2, sd)
+  ci <- t(apply(boot.out, 2, function(x) quantile(x, probs = c(0.025, 0.975))))
+  out <- cbind.data.frame(est, se, ci)
+  colnames(out) <- c("est", "se", "ci_l", "ci_h")
+  return(out)
+}
+

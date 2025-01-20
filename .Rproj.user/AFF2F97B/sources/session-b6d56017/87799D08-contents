@@ -1,0 +1,189 @@
+
+library(haven)
+d <- as.data.frame(read_dta("mortality.dta"))
+head(d)
+names(d)
+
+start <- 1954
+
+d$provid <- as.factor(d$provid)
+s1 <- subset(d, zupu %in% c(0, 1))
+s2 <- subset(d, zupu %in% c(0, 2))
+
+median(d$pczupu)
+d$highzupu <- ifelse(d$zupu == 2, 1, 0)
+d$highzupu <- ifelse(d$pczupu >= median(d$pczupu), 1, 0)
+
+treat <- "highzupu"
+Y <- "mortality"
+time <- "year"
+period <- start:1966
+tr_period <- 1958:1961
+covar <- c("avggrain", "nograin", "urban", "dis_bj", "dis_pc", "rice",
+           "minority", "edu", "lnpop")
+covar <- NULL
+estimator_type = "lin"
+
+
+#             $$\                $$\
+#             $$ |               $$ |
+#  $$$$$$$\ $$$$$$\    $$$$$$\ $$$$$$\    $$$$$$$\
+# $$  _____|\_$$  _|   \____$$\\_$$  _|  $$  _____|
+# \$$$$$$\    $$ |     $$$$$$$ | $$ |    \$$$$$$\
+#  \____$$\   $$ |$$\ $$  __$$ | $$ |$$\  \____$$\
+# $$$$$$$  |  \$$$$  |\$$$$$$$ | \$$$$  |$$$$$$$  |
+# \_______/    \____/  \_______|  \____/ \_______/
+
+
+# generate N, means, sd, min, max for a set of variables
+
+summarize <- function(data, vars) {
+  out <- data.frame()
+  for (v in vars) {
+    out <- rbind(out, data.frame(var = v,
+                                 N = sum(!is.na(data[[v]])),
+          mean = round(mean(data[[v]], na.rm = TRUE), 2),
+          median = round(median(data[[v]], na.rm = TRUE), 2),
+          sd = round(sd(data[[v]], na.rm = TRUE), 2),
+          min = round(min(data[[v]], na.rm = TRUE), 2),
+          max = round(max(data[[v]], na.rm = TRUE), 2)))
+  }
+  return(out)
+}
+
+YY <- paste0("mortality", 1954:1966)
+s <- summarize(d, c(treat, covar, YY))
+
+# makes into a latex table (no row numbers)
+library(xtable)
+print(xtable(s, digits = 2), type = "latex", include.rownames=FALSE)
+
+
+
+#  $$$$$$\  $$$$$$\  $$\  $$\  $$\
+# $$  __$$\ \____$$\ $$ | $$ | $$ |
+# $$ |  \__|$$$$$$$ |$$ | $$ | $$ |
+# $$ |     $$  __$$ |$$ | $$ | $$ |
+# $$ |     \$$$$$$$ |\$$$$$\$$$$  |
+# \__|      \_______| \_____\____/
+
+
+source("functions.R")
+source("functions_plot.R")
+
+
+# Paper
+pdf("figs/famine_raw.pdf", height = 5, width = 8)
+plot.means(data = d, Y = Y, treat = "highzupu", time = time,
+           period = period, tr_period, labels = c("High Social Capital", "Low Social Capital"))
+graphics.off()
+
+
+
+#  $$$$$$\   $$$$$$$\  $$$$$$$\  $$$$$$\   $$$$$$\   $$$$$$\
+# $$  __$$\ $$  _____|$$  _____|$$  __$$\ $$  __$$\ $$  __$$\
+# $$ /  $$ |\$$$$$$\  $$ /      $$ /  $$ |$$ |  \__|$$$$$$$$ |
+# $$ |  $$ | \____$$\ $$ |      $$ |  $$ |$$ |      $$   ____|
+# $$$$$$$  |$$$$$$$  |\$$$$$$$\ \$$$$$$  |$$ |      \$$$$$$$\
+# $$  ____/ \_______/  \_______| \______/ \__|       \_______|
+# $$ |
+# $$ |
+# \__|
+
+source("functions.R")
+source("functions_plot.R")
+
+pdf("figs/ps.pdf", width = 7, height = 5)
+assess_overlap(data = d, treat = "highzupu", cov = covar, odds = FALSE, xlim = c(0.0, 1))
+graphics.off()
+
+
+
+#                       $$\
+#                       $$ |
+#  $$$$$$\   $$$$$$$\ $$$$$$\
+# $$  __$$\ $$  _____|\_$$  _|
+# $$$$$$$$ |\$$$$$$\    $$ |
+# $$   ____| \____$$\   $$ |$$\
+# \$$$$$$$\ $$$$$$$  |  \$$$$  |
+#  \_______|\_______/    \____/
+
+
+source("functions.R")
+source("functions_plot.R")
+
+period <- start:1961
+tr_period <- 1958:1961
+ref_period <- 1957
+
+est <- est.all(data = d, Y = Y, treat = "highzupu",
+          covar = covar, ref_period = ref_period, tr_period = 1958:1961,
+          methods = c("diff", "reg", estimator_type))
+
+est.pre <- est.all(data = d, Y = Y, treat = "highzupu",
+          covar = covar, ref_period = ref_period, tr_period = 1954:1956,
+          methods = c("diff", "reg", estimator_type))
+
+est.pst <- est.all(data = d, Y = Y, treat = "highzupu",
+          covar = covar, ref_period = ref_period, tr_period = 1962:1966,
+          methods = c("diff", "reg", estimator_type))
+
+round(est, 3)
+round(est.pre, 3)
+round(est.pst, 3)
+
+est.boot <- est.all.boot(data = d, Y = Y, treat = "highzupu",
+          covar = covar, ref_period = 1957, tr_period = 1958:1961,
+          methods = c("diff", "reg", estimator_type))
+
+est.pre.boot <- est.all.boot(data = d, Y = Y, treat = "highzupu",
+          covar = covar, ref_period = 1957, tr_period = 1954:1956,
+          methods = c("diff", "reg", estimator_type))
+
+est.pst.boot <- est.all.boot(data = d, Y = Y, treat = "highzupu",
+          covar = covar, ref_period = 1957, tr_period = 1962:1966,
+          methods = c("diff", "reg", estimator_type))
+
+
+round(est.boot, 3)
+round(est.pre.boot, 3)
+round(est.pst.boot, 3)
+
+
+
+
+
+#       $$\
+#       $$ |
+#  $$$$$$$ |$$\   $$\ $$$$$$$\
+# $$  __$$ |$$ |  $$ |$$  __$$\
+# $$ /  $$ |$$ |  $$ |$$ |  $$ |
+# $$ |  $$ |$$ |  $$ |$$ |  $$ |
+# \$$$$$$$ |\$$$$$$$ |$$ |  $$ |
+#  \_______| \____$$ |\__|  \__|
+#           $$\   $$ |
+#           \$$$$$$  |
+#            \______/
+
+
+data <- d
+treat <- "highzupu"
+Y <- "mortality"
+time <- "year"
+period <- start:1966
+tr_period <- 1958:1961
+base.period <- 1957
+covar <- c("avggrain", "nograin", "migrants", "urban", "dis_bj", "dis_pc", "rice", "minority", "edu", "lnpop")
+covar <- c("migrants")
+source("functions.R")
+source("functions_plot.R")
+
+out.lin.dyn <- est.dyn(d, Y = Y, treat = "highzupu", covar = covar,
+  period = period, base.period = base.period, estimator = "lin")
+
+pdf("figs/est_dyn.pdf", height = 5, width = 8)
+ylim <- c(-12, 10)
+plot.dyn(out.lin.dyn, ylim, tr_period, main = "")
+graphics.off()
+
+

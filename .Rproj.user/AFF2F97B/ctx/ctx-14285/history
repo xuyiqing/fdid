@@ -1,0 +1,512 @@
+d$provid   <- as.factor(d$provid)
+d$highzupu <- ifelse(d$pczupu >= median(d$pczupu, na.rm = TRUE), 1, 0)
+# Define parameters
+start     <- 1954
+end       <- 1966
+period    <- start:end           # 1954:1966
+tr_period <- 1958:1961
+treat     <- "highzupu"          # name of treat variable
+Y         <- "mortality"         # outcome
+time      <- "year"
+unit      <- "uniqueid"
+cluster   <- "provid"
+covar     <- c("avggrain", "nograin", "urban", "dis_bj", "dis_pc",
+"rice", "minority", "edu", "lnpop")
+# ------------------
+# 1. Prepare the data for FDID (long -> wide)
+# ------------------
+# The updated fdid_prepare() will pivot to wide but
+# won't add "Y" prefix. Columns remain "1954","1955",...,"1966".
+prepared_data <- fdid_prepare(
+data          = d,
+Y_label       = Y,
+X_labels      = covar,
+G_label       = treat,
+unit_label    = unit,
+time_label    = time,
+cluster_label = cluster
+)
+# Look at the head of prepared_data to see wide columns: "1954","1955",...,"1966"
+# head(prepared_data)
+# ------------------
+# 2. Estimate Effects Using the New fdid()
+# ------------------
+# We'll do simple OLS with covariates (ols1), robust standard errors, cluster on "provid"
+fdid_results <- fdid(
+s       = prepared_data,
+tr_period  = tr_period,
+ref_period = 1954:1957,
+method     = "ols2",
+vartype= "bootstrap",
+parallel = TRUE
+)
+devtools::install()
+install.packages("doSNOW")
+install.packages("doParallel")
+install.packages("doMPI")
+devtools::install()
+# ----------------------------------------------------------
+# Test Code Using fdid_prepare() for Long Data, Then fdid()
+# ----------------------------------------------------------
+# Load your FDID package (contains fdid_prepare(), fdid(), fdid_dyn(), plot.fdid(), etc.)
+library(fdid)
+# Load additional libraries
+library(haven)
+library(dplyr)
+# Load the dataset (long format)
+d <- as.data.frame(read.csv("long_format_data.csv"))
+# Example minor data prep
+d$uniqueid <- paste(as.character(d$provid), as.character(d$countyid), sep = "-")
+d$provid   <- as.factor(d$provid)
+d$highzupu <- ifelse(d$pczupu >= median(d$pczupu, na.rm = TRUE), 1, 0)
+# Define parameters
+start     <- 1954
+end       <- 1966
+period    <- start:end           # 1954:1966
+tr_period <- 1958:1961
+treat     <- "highzupu"          # name of treat variable
+Y         <- "mortality"         # outcome
+time      <- "year"
+unit      <- "uniqueid"
+cluster   <- "provid"
+covar     <- c("avggrain", "nograin", "urban", "dis_bj", "dis_pc",
+"rice", "minority", "edu", "lnpop")
+# ------------------
+# 1. Prepare the data for FDID (long -> wide)
+# ------------------
+# The updated fdid_prepare() will pivot to wide but
+# won't add "Y" prefix. Columns remain "1954","1955",...,"1966".
+prepared_data <- fdid_prepare(
+data          = d,
+Y_label       = Y,
+X_labels      = covar,
+G_label       = treat,
+unit_label    = unit,
+time_label    = time,
+cluster_label = cluster
+)
+# Look at the head of prepared_data to see wide columns: "1954","1955",...,"1966"
+# head(prepared_data)
+# ------------------
+# 2. Estimate Effects Using the New fdid()
+# ------------------
+# We'll do simple OLS with covariates (ols1), robust standard errors, cluster on "provid"
+fdid_results <- fdid(
+s       = prepared_data,
+tr_period  = tr_period,
+ref_period = 1954:1957,
+method     = "ols2",
+vartype= "bootstrap",
+parallel = TRUE
+)
+devtools::document()
+devtools::install()
+# ----------------------------------------------------------
+# Test Code Using fdid_prepare() for Long Data, Then fdid()
+# ----------------------------------------------------------
+# Load your FDID package (contains fdid_prepare(), fdid(), fdid_dyn(), plot.fdid(), etc.)
+library(fdid)
+# Load additional libraries
+library(haven)
+library(dplyr)
+# Load the dataset (long format)
+d <- as.data.frame(read.csv("long_format_data.csv"))
+# Example minor data prep
+d$uniqueid <- paste(as.character(d$provid), as.character(d$countyid), sep = "-")
+d$provid   <- as.factor(d$provid)
+d$highzupu <- ifelse(d$pczupu >= median(d$pczupu, na.rm = TRUE), 1, 0)
+# Define parameters
+start     <- 1954
+end       <- 1966
+period    <- start:end           # 1954:1966
+tr_period <- 1958:1961
+treat     <- "highzupu"          # name of treat variable
+Y         <- "mortality"         # outcome
+time      <- "year"
+unit      <- "uniqueid"
+cluster   <- "provid"
+covar     <- c("avggrain", "nograin", "urban", "dis_bj", "dis_pc",
+"rice", "minority", "edu", "lnpop")
+# ------------------
+# 1. Prepare the data for FDID (long -> wide)
+# ------------------
+# The updated fdid_prepare() will pivot to wide but
+# won't add "Y" prefix. Columns remain "1954","1955",...,"1966".
+prepared_data <- fdid_prepare(
+data          = d,
+Y_label       = Y,
+X_labels      = covar,
+G_label       = treat,
+unit_label    = unit,
+time_label    = time,
+cluster_label = cluster
+)
+# Look at the head of prepared_data to see wide columns: "1954","1955",...,"1966"
+# head(prepared_data)
+# ------------------
+# 2. Estimate Effects Using the New fdid()
+# ------------------
+# We'll do simple OLS with covariates (ols1), robust standard errors, cluster on "provid"
+fdid_results <- fdid(
+s       = prepared_data,
+tr_period  = tr_period,
+ref_period = 1954:1957,
+method     = "ols2",
+vartype= "bootstrap",
+parallel = TRUE
+)
+# ----------------------------------------------------------
+# Test Code Using fdid_prepare() for Long Data, Then fdid()
+# ----------------------------------------------------------
+# Load your FDID package (contains fdid_prepare(), fdid(), fdid_dyn(), plot.fdid(), etc.)
+library(fdid)
+# Load additional libraries
+library(haven)
+library(dplyr)
+# Load the dataset (long format)
+d <- as.data.frame(read.csv("long_format_data.csv"))
+# Example minor data prep
+d$uniqueid <- paste(as.character(d$provid), as.character(d$countyid), sep = "-")
+d$provid   <- as.factor(d$provid)
+d$highzupu <- ifelse(d$pczupu >= median(d$pczupu, na.rm = TRUE), 1, 0)
+# Define parameters
+start     <- 1954
+end       <- 1966
+period    <- start:end           # 1954:1966
+tr_period <- 1958:1961
+treat     <- "highzupu"          # name of treat variable
+Y         <- "mortality"         # outcome
+time      <- "year"
+unit      <- "uniqueid"
+cluster   <- "provid"
+covar     <- c("avggrain", "nograin", "urban", "dis_bj", "dis_pc",
+"rice", "minority", "edu", "lnpop")
+# ------------------
+# 1. Prepare the data for FDID (long -> wide)
+# ------------------
+# The updated fdid_prepare() will pivot to wide but
+# won't add "Y" prefix. Columns remain "1954","1955",...,"1966".
+prepared_data <- fdid_prepare(
+data          = d,
+Y_label       = Y,
+X_labels      = covar,
+G_label       = treat,
+unit_label    = unit,
+time_label    = time,
+cluster_label = cluster
+)
+# Look at the head of prepared_data to see wide columns: "1954","1955",...,"1966"
+# head(prepared_data)
+# ------------------
+# 2. Estimate Effects Using the New fdid()
+# ------------------
+# We'll do simple OLS with covariates (ols1), robust standard errors, cluster on "provid"
+fdid_results <- fdid(
+s       = prepared_data,
+tr_period  = tr_period,
+ref_period = 1954:1957,
+method     = "ols2",
+vartype= "bootstrap",
+parallel = FALSE
+)
+# vartype    = "robust",
+# na.rm      = TRUE
+# Summary of the results
+print(fdid_results$dynamic)
+# If you prefer a summary() approach (though fdid() returns a 1-row DF):
+print(summary(fdid_results))
+# ------------------
+# 3. Plot Raw Means
+# ------------------
+plot.fdid(fdid_results, type = "raw")
+plot.fdid(fdid_results, type = "dynamic")
+fdid_results <- fdid(
+s       = prepared_data,
+tr_period  = tr_period,
+ref_period = 1954:1957,
+method     = "aipw",
+)
+plot.fdid(fdid_results, type = "overlap")
+fdid_results1 <- fdid(
+s       = prepared_data,
+tr_period  = tr_period,
+ref_period = 1954:1957,
+method     = "ols1",
+)
+fdid_results2 <- fdid(
+s       = prepared_data,
+tr_period  = tr_period,
+ref_period = 1954:1957,
+method     = "ols2",
+)
+plot.fdid(list(fdid_results1,fdid_results2), type = "est")
+fdid_results$static
+fdid_results <- fdid(
+s       = prepared_data,
+tr_period  = tr_period,
+ref_period = 1954:1957,
+method     = "ols2",
+vartype= "bootstrap",
+parallel = FALSE
+)
+fdid_results
+fdid_results$static
+# We'll do simple OLS with covariates (ols1), robust standard errors, cluster on "provid"
+fdid_results <- fdid(
+s       = prepared_data,
+tr_period  = tr_period,
+ref_period = 1954:1957,
+method     = "ols2",
+vartype= "jackknife",
+parallel = FALSE
+)
+fdid_results$static
+fdid_results <- fdid(
+s       = prepared_data,
+tr_period  = tr_period,
+ref_period = 1954:1957,
+method     = "ols2",
+vartype= "robust",
+parallel = FALSE
+)
+fdid_results
+fdid_results$static
+devtools::document()
+devtools::install()
+devtools::install()
+# ----------------------------------------------------------
+# Test Code Using fdid_prepare() for Long Data, Then fdid()
+# ----------------------------------------------------------
+# Load your FDID package (contains fdid_prepare(), fdid(), fdid_dyn(), plot.fdid(), etc.)
+library(fdid)
+# Load additional libraries
+library(haven)
+library(dplyr)
+# Load the dataset (long format)
+d <- as.data.frame(read.csv("long_format_data.csv"))
+# Example minor data prep
+d$uniqueid <- paste(as.character(d$provid), as.character(d$countyid), sep = "-")
+d$provid   <- as.factor(d$provid)
+d$highzupu <- ifelse(d$pczupu >= median(d$pczupu, na.rm = TRUE), 1, 0)
+# Define parameters
+start     <- 1954
+end       <- 1966
+period    <- start:end           # 1954:1966
+tr_period <- 1958:1961
+treat     <- "highzupu"          # name of treat variable
+Y         <- "mortality"         # outcome
+time      <- "year"
+unit      <- "uniqueid"
+cluster   <- "provid"
+covar     <- c("avggrain", "nograin", "urban", "dis_bj", "dis_pc",
+"rice", "minority", "edu", "lnpop")
+# ------------------
+# 1. Prepare the data for FDID (long -> wide)
+# ------------------
+# The updated fdid_prepare() will pivot to wide but
+# won't add "Y" prefix. Columns remain "1954","1955",...,"1966".
+prepared_data <- fdid_prepare(
+data          = d,
+Y_label       = Y,
+X_labels      = covar,
+G_label       = treat,
+unit_label    = unit,
+time_label    = time,
+cluster_label = cluster
+)
+# Look at the head of prepared_data to see wide columns: "1954","1955",...,"1966"
+# head(prepared_data)
+# ------------------
+# 2. Estimate Effects Using the New fdid()
+# ------------------
+# We'll do simple OLS with covariates (ols1), robust standard errors, cluster on "provid"
+fdid_results <- fdid(
+s       = prepared_data,
+tr_period  = tr_period,
+ref_period = 1954:1957,
+method     = "ols2",
+vartype= "jackknife",
+parallel = FALSE
+)
+# ----------------------------------------------------------
+# Test Code Using fdid_prepare() for Long Data, Then fdid()
+# ----------------------------------------------------------
+# Load your FDID package (contains fdid_prepare(), fdid(), fdid_dyn(), plot.fdid(), etc.)
+library(fdid)
+# Load additional libraries
+library(haven)
+library(dplyr)
+# Load the dataset (long format)
+d <- as.data.frame(read.csv("long_format_data.csv"))
+# Example minor data prep
+d$uniqueid <- paste(as.character(d$provid), as.character(d$countyid), sep = "-")
+d$provid   <- as.factor(d$provid)
+d$highzupu <- ifelse(d$pczupu >= median(d$pczupu, na.rm = TRUE), 1, 0)
+# Define parameters
+start     <- 1954
+end       <- 1966
+period    <- start:end           # 1954:1966
+tr_period <- 1958:1961
+treat     <- "highzupu"          # name of treat variable
+Y         <- "mortality"         # outcome
+time      <- "year"
+unit      <- "uniqueid"
+cluster   <- "provid"
+covar     <- c("avggrain", "nograin", "urban", "dis_bj", "dis_pc",
+"rice", "minority", "edu", "lnpop")
+# ------------------
+# 1. Prepare the data for FDID (long -> wide)
+# ------------------
+# The updated fdid_prepare() will pivot to wide but
+# won't add "Y" prefix. Columns remain "1954","1955",...,"1966".
+prepared_data <- fdid_prepare(
+data          = d,
+Y_label       = Y,
+X_labels      = covar,
+G_label       = treat,
+unit_label    = unit,
+time_label    = time,
+cluster_label = cluster
+)
+# Look at the head of prepared_data to see wide columns: "1954","1955",...,"1966"
+# head(prepared_data)
+# ------------------
+# 2. Estimate Effects Using the New fdid()
+# ------------------
+# We'll do simple OLS with covariates (ols1), robust standard errors, cluster on "provid"
+fdid_results <- fdid(
+s       = prepared_data,
+tr_period  = tr_period,
+ref_period = 1954:1957,
+method     = "ols2",
+vartype= "jackknife",
+parallel = TRUE
+)
+# ----------------------------------------------------------
+# Test Code Using fdid_prepare() for Long Data, Then fdid()
+# ----------------------------------------------------------
+# Load your FDID package (contains fdid_prepare(), fdid(), fdid_dyn(), plot.fdid(), etc.)
+library(fdid)
+# Load additional libraries
+library(haven)
+library(dplyr)
+# Load the dataset (long format)
+d <- as.data.frame(read.csv("long_format_data.csv"))
+# Example minor data prep
+d$uniqueid <- paste(as.character(d$provid), as.character(d$countyid), sep = "-")
+d$provid   <- as.factor(d$provid)
+d$highzupu <- ifelse(d$pczupu >= median(d$pczupu, na.rm = TRUE), 1, 0)
+# Define parameters
+start     <- 1954
+end       <- 1966
+period    <- start:end           # 1954:1966
+tr_period <- 1958:1961
+treat     <- "highzupu"          # name of treat variable
+Y         <- "mortality"         # outcome
+time      <- "year"
+unit      <- "uniqueid"
+cluster   <- "provid"
+covar     <- c("avggrain", "nograin", "urban", "dis_bj", "dis_pc",
+"rice", "minority", "edu", "lnpop")
+# ------------------
+# 1. Prepare the data for FDID (long -> wide)
+# ------------------
+# The updated fdid_prepare() will pivot to wide but
+# won't add "Y" prefix. Columns remain "1954","1955",...,"1966".
+prepared_data <- fdid_prepare(
+data          = d,
+Y_label       = Y,
+X_labels      = covar,
+G_label       = treat,
+unit_label    = unit,
+time_label    = time,
+cluster_label = cluster
+)
+# Look at the head of prepared_data to see wide columns: "1954","1955",...,"1966"
+# head(prepared_data)
+# ------------------
+# 2. Estimate Effects Using the New fdid()
+# ------------------
+# We'll do simple OLS with covariates (ols1), robust standard errors, cluster on "provid"
+fdid_results <- fdid(
+s       = prepared_data,
+tr_period  = tr_period,
+ref_period = 1954:1957,
+method     = "ols2",
+vartype= "bootstrap",
+parallel = TRUE
+)
+# ----------------------------------------------------------
+# Test Code Using fdid_prepare() for Long Data, Then fdid()
+# ----------------------------------------------------------
+# Load your FDID package (contains fdid_prepare(), fdid(), fdid_dyn(), plot.fdid(), etc.)
+library(fdid)
+# Load additional libraries
+library(haven)
+library(dplyr)
+# Load the dataset (long format)
+d <- as.data.frame(read.csv("long_format_data.csv"))
+# Example minor data prep
+d$uniqueid <- paste(as.character(d$provid), as.character(d$countyid), sep = "-")
+d$provid   <- as.factor(d$provid)
+d$highzupu <- ifelse(d$pczupu >= median(d$pczupu, na.rm = TRUE), 1, 0)
+# Define parameters
+start     <- 1954
+end       <- 1966
+period    <- start:end           # 1954:1966
+tr_period <- 1958:1961
+treat     <- "highzupu"          # name of treat variable
+Y         <- "mortality"         # outcome
+time      <- "year"
+unit      <- "uniqueid"
+cluster   <- "provid"
+covar     <- c("avggrain", "nograin", "urban", "dis_bj", "dis_pc",
+"rice", "minority", "edu", "lnpop")
+# ------------------
+# 1. Prepare the data for FDID (long -> wide)
+# ------------------
+# The updated fdid_prepare() will pivot to wide but
+# won't add "Y" prefix. Columns remain "1954","1955",...,"1966".
+prepared_data <- fdid_prepare(
+data          = d,
+Y_label       = Y,
+X_labels      = covar,
+G_label       = treat,
+unit_label    = unit,
+time_label    = time,
+cluster_label = cluster
+)
+# Look at the head of prepared_data to see wide columns: "1954","1955",...,"1966"
+# head(prepared_data)
+# ------------------
+# 2. Estimate Effects Using the New fdid()
+# ------------------
+# We'll do simple OLS with covariates (ols1), robust standard errors, cluster on "provid"
+fdid_results <- fdid(
+s       = prepared_data,
+tr_period  = tr_period,
+ref_period = 1954:1957,
+method     = "ols2",
+vartype= "bootstrap",
+parallel = TRUE
+)
+# vartype    = "robust",
+# na.rm      = TRUE
+# Summary of the results
+print(fdid_results$dynamic)
+fdid_results <- fdid(
+s       = prepared_data,
+tr_period  = tr_period,
+ref_period = 1954:1957,
+method     = "ols2",
+vartype= "bootstrap",
+parallel = TRUE
+)
+fdid_results <- fdid(
+s       = prepared_data,
+tr_period  = tr_period,
+ref_period = 1954:1957,
+method     = "ols2",
+vartype= "bootstrap",
+parallel = TRUE
+)

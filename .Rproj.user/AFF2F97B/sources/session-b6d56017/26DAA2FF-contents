@@ -1,0 +1,286 @@
+                              
+#  $$$$$$\  $$$$$$\  $$\  $$\  $$\ 
+# $$  __$$\ \____$$\ $$ | $$ | $$ |
+# $$ |  \__|$$$$$$$ |$$ | $$ | $$ |
+# $$ |     $$  __$$ |$$ | $$ | $$ |
+# $$ |     \$$$$$$$ |\$$$$$\$$$$  |
+# \__|      \_______| \_____\____/ 
+                                 
+                                                                
+
+plot.means <- function(data, Y, treat, time, period, tr_period, labels = NULL) {
+  if (is.null(labels)==TRUE) {
+    labels <- c("With Genealogies", "Without Genealogies")
+  }
+  par(mar = c(4, 4, 1, 1))
+  d <- data
+  TT <- length(period)
+  mean1 <- mean0 <- rep(0, TT)
+  for (i in 1:TT) {
+    mean1[i] <- mean(d[which(d[, treat]==1), paste0(Y,period[i])], na.rm = TRUE)
+    mean0[i] <- mean(d[which(d[, treat]==0), paste0(Y,period[i])], na.rm = TRUE)
+  }
+  out <- cbind.data.frame(time = period, Y0 = mean0, Y1 = mean1)
+  plot(out[,1], out[, 2], type = "n", ylim = c(0, 40), 
+       xlab = "Year", ylab = "Deaths per 1,000 People")
+  trp1 <- min(tr_period)
+  trp2 <- max(tr_period)
+  rect(trp1-0.5, -2, trp2+0.5, 100, col = "#AAAAAA50", border = FALSE)
+  box()
+  lines(out[,1], out[, 2], type = "l", col = 4, lty = 2, lwd = 1.5)
+  lines(out[,1], out[, 3], type = "l", col = 1, lwd = 1.2)
+  points(out[,1], out[, 2], pch = 17, col = 4)
+  points(out[,1], out[, 3], pch = 16, col = 1, cex = 1.2)
+  legend("topright",labels,cex=1.2, col = c(1, 4), 
+         pch = c(16, 17), seg.len=1,bty="n")
+  text(1959.5, 38, "Famine", cex = 1.2, col = "gray30")
+}
+
+
+###############################################
+# Plot histogram of propensity scores
+# by treatment and control groups
+###############################################
+
+library(grf)
+
+
+assess_overlap <- function(data, treat, cov, odds = TRUE, 
+  num.trees = NULL, seed = 1234, breaks = 50, xlim = NULL, ylim = NULL) {
+  
+  data <- data[complete.cases(data[, c(treat, cov)]),]
+  
+  if(is.null(num.trees))
+  {
+    p.forest1 <- probability_forest(X = data[, cov],
+                                    Y = as.factor(data[,treat]), seed = seed)
+  }
+  else
+  {
+    p.forest1 <- probability_forest(X = data[, cov],
+                                    Y = as.factor(data[,treat]), seed = seed, num.trees = num.trees)
+  }
+  data$ps_assoverlap <- p.forest1$predictions[,2]
+  #range(lcps.plus$ps)
+  data$ps_assoverlap[which(abs(data$ps_assoverlap) <= 1e-7)] <- 1e-7
+  #range(lcps.plus$ps)
+  if(odds == TRUE)
+  {
+    plot_hist(data, "ps_assoverlap", treat, odds = TRUE, breaks = breaks,
+              density = TRUE, main = "", xlim = xlim, ylim = ylim)
+  }
+  else
+  {
+    plot_hist(data, "ps_assoverlap", treat, odds = FALSE, breaks = breaks,
+              density = TRUE, main = "", xlim = xlim, ylim = ylim)
+  }
+  return(NULL)
+}
+
+plot_hist <- function(data, var, treat, main = NULL, odds = FALSE,
+    breaks = 40, density = TRUE, xlim = NULL, ylim = NULL,
+    xlab = NULL, text.size = 1.5, text = FALSE) {
+    ntr <- sum(data[, treat] == 1)
+    nco <- sum(data[, treat] == 0)  
+    if (odds == TRUE) {
+      data[, var] <- log(data[, var]/(1-data[, var]))
+      if (is.null(xlab) == TRUE) {xlab <- "Log Odds"}      
+    } else {
+      if (is.null(xlab) == TRUE) {xlab <- "Propensity Score"}
+    }
+    if (is.null(xlim)) {
+      if (odds == TRUE) {
+        xlim <- range(data[, var])
+        cat(xlim)
+      } else {
+        xlim <- c(0,1)
+      }
+    }
+    intervals <- seq(xlim[1], xlim[2], length.out = breaks + 1)
+    print(intervals)
+    h0 <- as.numeric(table(cut(data[data[,treat]==0, var], 
+        breaks = intervals, include.lowest = TRUE)))
+    h1 <- as.numeric(table(cut(data[data[,treat]==1, var], 
+        breaks = intervals, include.lowest = TRUE)))
+    if (density == TRUE) {
+        h0 <- h0/sum(h0); h1 <- h1/sum(h1)    
+    }
+    s <- cbind.data.frame(h0, h1)
+    if (is.null(ylim)) {
+      ylim.max <- max(s$h0, s$h1) * 1.2
+      ylim <- c(-ylim.max, ylim.max)
+    }
+    par(mar = c(4, 4, 1, 1))
+    barplot(s$h0 * -1, names.arg = sprintf("%.2f", intervals[-1]),
+        col = "#AAAAAA80", main = main, cex.lab = 1.3,
+        ylim = ylim, xlab = xlab, cex.axis = 1.2, cex.names = 1.2,
+        ylab = "Density", border = NA, axes = TRUE)
+    barplot(s$h1, col = "#ff000080", add = TRUE,
+        border = NA, cex.axis = 1.2)
+    abline(h = 0, col = "gray60", lty = 2, lwd = 1.5)
+    axis(1, at = seq(1, 55, length.out = 10), labels = FALSE)
+    usr <- par("usr")
+    user_x <- usr[1] + 0.03 * (usr[2] - usr[1])
+    user_y <- usr[3] + 0.92 * (usr[4] - usr[3])
+    if (text == TRUE) {
+      text(user_x, user_y, paste("Ntr = ", ntr), pos = 4, cex = text.size)
+      text(user_x, user_y - 0.05 * (usr[4] - usr[3]), paste("Nco = ", nco), pos = 4, cex = text.size)    
+    }
+    box()
+}
+
+#                                $$$$$$\  
+#                               $$  __$$\ 
+#  $$$$$$$\  $$$$$$\   $$$$$$\  $$ /  \__|
+# $$  _____|$$  __$$\ $$  __$$\ $$$$\     
+# $$ /      $$ /  $$ |$$$$$$$$ |$$  _|    
+# $$ |      $$ |  $$ |$$   ____|$$ |      
+# \$$$$$$$\ \$$$$$$  |\$$$$$$$\ $$ |      
+#  \_______| \______/  \_______|\__|      
+
+                                        
+plot_coef <- function(out, 
+    methods = c("diff", "reg", "om.reg", "om.grf", 
+    "matching", "psm", "ipw", "cbps", "ebal", 
+        "dml", "aipw_grf"),
+    labels = c("Diff-in-Means", "Reg", "OM: Reg", "OM: GRF",
+        "NN\nMatching", "PS\nMatching",
+        "IPW", "CBPS", "Ebal", "DML-Elasnet", "AIPW-GRF"),
+    main = NULL,
+    ylab = "Estimate",
+    band = NULL,
+    line = NULL,
+    grid = TRUE,
+    main.pos = 1,
+    main.line = -2,
+    ylim = NULL
+) {
+  
+
+  # # check
+  # if (is.null(out)==FALSE) {
+  #   if (inherits(out, "ivDiag") == FALSE) {stop("\"out\" needs to be a \"ltz\" object.")}
+  # }
+  # 
+  # # title
+  # if (is.null(main)==TRUE) {
+  #   main <- "Estimates with 95% CIs"
+  # }
+  
+  if (is.null(methods) == TRUE) {
+    methods <- rownames(out)
+  } 
+  data <- NULL
+  data <- out[which(is.na(match(rownames(out), methods))==FALSE),]
+  ncoefs <- nrow(data)
+  
+  if (is.null(labels) == TRUE) {
+    labels <- methods
+  }
+  
+  
+  # Data for the plot
+  rg <- range(data[,c(3,4)], na.rm = TRUE)
+  adj <- rg[2] - rg[1]
+  if (is.null(ylim) == TRUE) {
+    ylim  <- c(min(0, rg[1] - 0.3*adj), max(0, rg[2] + 0.35*adj))
+  }
+  adj2 <- ylim[2] - ylim[1] 
+  
+  # Set up the plot
+  par(mar = c(2.5, 4, 1, 2))
+  plot(1: ncoefs, data[, 1], xlim = c(0.5, ncoefs + 0.5), ylim = ylim,
+       ylab = "", xlab = "", main = "", 
+       axes = FALSE, xaxt = "n", yaxt = "n", type = "n")
+  axis(1, at = 1: ncoefs, labels =  labels, las = 1, cex.axis = 0.8)
+  axis(2, cex.axis = 0.7)
+  mtext(main, main.pos, line = main.line, cex = 1.5)
+  mtext(ylab, 2, line = 2.5)
+  if (is.null(band) == FALSE) {
+    rect(-0.5, band[1], ncoefs + 1, band[2], col = "#ff000030", border = "white") # label at bottom
+  }
+  if (is.null(line) == FALSE) {
+    abline(h = line, col = "red", lty = 2)
+  }
+  if (grid == TRUE) {
+    abline(h = axTicks(2), lty = "dotted", col = "gray50")
+    abline(v = c(0.5, c(1: ncoefs) + 0.5), lty = "dotted", col = "gray50") # horizontal grid
+  }
+  abline(h = 0, col = "red", lwd = 2, lty = "solid")
+  segments(y0 = data[, 3], x0 = c(1: ncoefs), y1 = data[, 4], x1 = c(1: ncoefs), lwd = 2) #CI
+  points(1: ncoefs, data[, 1], pch = 16, col = 1, cex = 1.2) #point coefs
+  box()
+}
+
+plot_coef2 <- function(out, 
+    methods = c("diff", "reg", "matching", "psm",
+        "om.reg", "om.grf",
+        "ipw", "cbps", "ebal", "hbal", 
+        "dml", "aipw_grf"),
+    labels = c("diff-in-means", "linear\nreg", "matching", "pscore\nmatching",
+        "om: reg", "om: grf",
+        "ipw", "cbps", "ebal", "hbal", 
+        "dml_elasnet", "aipw_grf"),
+    main = NULL,
+    xlab = "Estimate",
+    band = c(0, 3500),
+    grid = TRUE,
+    stats = TRUE,
+    ylim = NULL
+) {
+  
+  if (is.null(methods) == TRUE) {
+    methods <- rownames(out)
+  }
+  
+  if (is.null(labels) == TRUE) {
+    labels <- methods
+  }  
+ 
+  # Data for the plot
+  data <- out
+  rg <- range(data[,c(3,4)], na.rm = TRUE)
+  adj <- rg[2] - rg[1]
+  if (is.null(xlim) == TRUE) {
+    xlim  <- c(min(0, rg[1] - 0.3*adj), max(0, rg[2] + 0.35*adj))
+  }
+  adj2 <- xlim[2] - xlim[1] 
+  
+  # Set up the plot
+  ncoefs <- length(methods)
+  par(mar = c(4, 5, 3, 2))
+  plot(data[, 1], 1: ncoefs, ylim = c(0.5, ncoefs + 0.5), xlim = xlim,
+       ylab = "", xlab = "", main = main, 
+       axes = FALSE, xaxt = "n", yaxt = "n", type = "n")
+  axis(2, at = ncoefs: 1, labels =  labels, las = 1, cex.axis = 0.8)
+  axis(1)
+  mtext(xlab, 1, line = 2.5)
+  # if (is.null(band) == FALSE) {
+  #   rect(-0.5, band[1], ncoefs + 1, band[2], col = "#ff000030", border = "white") # label at bottom
+  # }
+  if (grid == TRUE) {
+    abline(v = axTicks(2), lty = "dotted", col = "gray50")
+    abline(h = c(0.5, c(1: ncoefs) + 0.5), lty = "dotted", col = "gray50") # horizontal grid
+  }
+  abline(v = 0, col = "red", lwd = 2, lty = "solid")
+  segments(x0 = data[, 3], y0 = c(ncoefs: 1), x1 = data[, 4], y1 = c(ncoefs: 1), lwd = 2) #CI
+  points(data[, 1], c(ncoefs: 1), pch = 16, col = 1, cex = 1.2) #point coefs
+  box()
+}
+
+plot.dyn <- function(out, ylim, tr_period, main = "") {
+  par(mar = c(4, 4, 1, 1))
+  period <- rownames(out)
+  plot(period, out[, 1], type = "n", ylim = ylim, 
+       xlab = "Year", ylab = "Estimated Coefficient (w/ 95% CI)", main = main)
+  trp1 <- min(tr_period)
+  trp2 <- max(tr_period)
+  rect(trp1-0.5, ylim[1]-1, trp2+0.5, ylim[2]+1, col = "#AAAAAA50", border = FALSE)
+  box()
+  abline(h = 0, col = "gray", lwd = 2, lty = 2)
+  for (i in 1:nrow(out)) {
+    lines(c(period[i], period[i]), c(out[i,3], out[i,4]))
+  }
+  points(period, out[, 1], pch = 16)
+  text(1959.5, ylim[2]-1, "Famine", cex = 1.2, col = "gray30")
+}

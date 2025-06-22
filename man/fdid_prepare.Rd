@@ -2,12 +2,12 @@
 % Please edit documentation in R/fdid_prepare.R
 \name{fdid_prepare}
 \alias{fdid_prepare}
-\title{Prepare Data for First-Difference-in-Differences Analysis}
+\title{Prepare Data for Factorial Difference-in-Differences Analysis}
 \usage{
 fdid_prepare(
   data,
   Y_label,
-  X_labels,
+  X_labels = NULL,
   G_label,
   unit_label,
   time_label,
@@ -30,31 +30,20 @@ fdid_prepare(
 \item{cluster_label}{An optional string specifying the column name of the clustering variable. Default is `NULL`.}
 }
 \value{
-A data frame in wide format, with the following transformations:
-\itemize{
-  \item The outcome variable (`Y_label`) is pivoted to wide format.
-  \item Time-varying covariates (`X_labels`) are averaged across time.
-  \item Columns are renamed for consistency:
-    \itemize{
-      \item Unit identifier becomes `unit`.
-      \item Time-varying covariates are renamed sequentially as `x1`, `x2`, etc.
-      \item Group variable becomes `G`.
-      \item Clustering variable (if provided) becomes `c`.
-    }
-}
+A data frame in wide format with the following:
+- Outcome variable pivoted to wide format with time columns.
+- Time-varying covariates averaged across time.
+- Columns renamed:
+  - Unit identifier -> `unit`
+  - Covariates -> `x1`, `x2`, ...
+  - Group variable -> `G`
+  - Clustering variable (if provided) -> `c`
 }
 \description{
-This function prepares a dataset for first-difference-in-differences (FDID) analysis
-by transforming the data into a wide format, averaging time-varying covariates, and
-renaming columns for ease of use in subsequent analysis.
-}
-\details{
-The function assumes that the group variable (`G_label`) and optional clustering
-variable (`cluster_label`) do not vary over time for each unit. The first occurrence
-of these variables for each unit is used.
+Prepares a dataset for factorial difference-in-differences (FDID) analysis by reshaping the data into a wide format,
+averaging time-varying covariates, and renaming columns for consistency in subsequent analysis.
 }
 \examples{
-# Example usage:
 data <- data.frame(
   id = rep(1:3, each = 4),
   time = rep(1:4, times = 3),
@@ -73,4 +62,7 @@ fdid_data <- fdid_prepare(
 )
 head(fdid_data)
 
+}
+\author{
+Rivka Lipkovitz
 }

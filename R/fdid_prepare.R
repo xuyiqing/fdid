@@ -1,6 +1,6 @@
-#' Prepare Data for First-Difference-in-Differences Analysis
+#' Prepare Data for Factorial Difference-in-Differences Analysis
 #'
-#' Prepares a dataset for first-difference-in-differences (FDID) analysis by reshaping the data into a wide format,
+#' Prepares a dataset for factorial difference-in-differences (FDID) analysis by reshaping the data into a wide format,
 #' averaging time-varying covariates, and renaming columns for consistency in subsequent analysis.
 #'
 #' @param data A data frame containing the dataset to be processed.
@@ -41,10 +41,11 @@
 #'
 #' @import dplyr
 #' @import tidyr
+#' @author Rivka Lipkovitz
 #' @export
 fdid_prepare <- function(data,
                              Y_label,
-                             X_labels,
+                             X_labels = NULL,
                              G_label,
                              unit_label,
                              time_label,

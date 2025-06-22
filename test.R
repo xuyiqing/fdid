@@ -3,7 +3,6 @@
 # ----------------------------------------------------------
 
 # Set a seed for reproducibility
-set.seed(12345)
 
 # Load the FDID package and required libraries
 library(fdid)
@@ -11,7 +10,7 @@ library(haven)
 library(dplyr)
 
 # Load the dataset
-d <- as.data.frame(read.csv("long_format_data.csv"))
+d <- as.data.frame(read.csv("mortality.csv"))
 
 # Data Preparation: Add new variables and identifiers
 d$uniqueid <- paste(as.character(d$provid), as.character(d$countyid), sep = "-")
@@ -45,7 +44,7 @@ prepared_data <- fdid_prepare(
   time_label = time,
   # cluster_label = cluster
 )
-print("Prepared Data Structure:")
+cat("Prepared Data Summary:\n")
 print(str(prepared_data))
 
 # Edge case: Missing values in key columns
@@ -59,7 +58,7 @@ prepared_data_missing <- fdid_prepare(
   unit_label = unit,
   time_label = time
 )
-print("Prepared Data with Missing Values:")
+cat("Prepared Data with Missing Values:\n")
 print(head(prepared_data_missing))
 
 # ------------------
@@ -74,8 +73,10 @@ fdid_results_ols1 <- fdid(
   method = "ols1",
   vartype = "robust"
 )
-print("FDID Results (OLS1):")
-print(fdid_results_ols1$static)
+cat("FDID Results Summary (OLS1):\n")
+summary(fdid_results_ols1)
+cat("FDID Object Overview (OLS1):\n")
+print(fdid_results_ols1)
 
 # Test 2.2: FDID with Entropy Balancing
 fdid_results_ebal <- fdid(
@@ -85,8 +86,8 @@ fdid_results_ebal <- fdid(
   method = "ebal",
   vartype = "robust"
 )
-print("FDID Results (Entropy Balancing):")
-print(fdid_results_ebal$static)
+cat("FDID Results Summary (Entropy Balancing):\n")
+summary(fdid_results_ebal)
 
 # Test 2.3: FDID with AIPW
 fdid_results_aipw <- fdid(
@@ -96,8 +97,8 @@ fdid_results_aipw <- fdid(
   method = "aipw",
   vartype = "robust"
 )
-print("FDID Results (AIPW):")
-print(fdid_results_aipw$static)
+cat("FDID Results Summary (AIPW):\n")
+summary(fdid_results_aipw)
 
 # Test 2.4: Missing values handling in FDID
 fdid_results_missing <- fdid(
@@ -108,8 +109,8 @@ fdid_results_missing <- fdid(
   vartype = "robust",
   na.rm = TRUE
 )
-print("FDID Results with Missing Values (OLS1):")
-print(fdid_results_missing$static)
+cat("FDID Results Summary with Missing Values (OLS1):\n")
+summary(fdid_results_missing)
 
 # Test 2.5: Parallel computation with bootstrap variance
 fdid_results_parallel <- fdid(
@@ -119,11 +120,11 @@ fdid_results_parallel <- fdid(
   method = "ols1",
   vartype = "bootstrap",
   parallel = TRUE,
-  cores = 2,
-  nsims = 100
+  cores = 8,
+  nsims = 1000
 )
-print("FDID Results (Parallel Bootstrap):")
-print(fdid_results_parallel$static)
+cat("FDID Results Summary (Parallel Bootstrap):\n")
+summary(fdid_results_parallel)
 
 # ------------------
 # 3. Test: plot.fdid()
@@ -142,7 +143,7 @@ plot.fdid(fdid_results_aipw, type = "overlap")
 fdid_results_ols2 <- fdid(
   s = prepared_data,
   tr_period = tr_period,
-  ref_period = 1954:1957,
+  pre_period = 1954:1957,
   method = "ols2",
   vartype = "robust"
 )
@@ -168,8 +169,8 @@ fdid_results_nocovar <- fdid(
   method = "ols1",
   vartype = "robust"
 )
-print("FDID Results (No Covariates):")
-print(fdid_results_nocovar$static)
+cat("FDID Results Summary (No Covariates):\n")
+summary(fdid_results_nocovar)
 
 # Edge Case 2: Single treatment period
 fdid_results_single <- fdid(
@@ -179,24 +180,6 @@ fdid_results_single <- fdid(
   method = "ols1",
   vartype = "robust"
 )
-print("FDID Results (Single Treatment Period):")
-print(fdid_results_single$static)
+cat("FDID Results Summary (Single Treatment Period):\n")
+summary(fdid_results_single)
 
-# Edge Case 3: Cluster variable not provided
-prepared_data_nocluster <- fdid_prepare(
-  data = d,
-  Y_label = Y,
-  X_labels = covar,
-  G_label = treat,
-  unit_label = unit,
-  time_label = time
-)
-fdid_results_nocluster <- fdid(
-  s = prepared_data_nocluster,
-  tr_period = tr_period,
-  ref_period = 1954:1957,
-  method = "ols1",
-  vartype = "robust"
-)
-print("FDID Results (No Cluster Variable):")
-print(fdid_results_nocluster$static)

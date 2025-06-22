@@ -2,66 +2,84 @@
 % Please edit documentation in R/fdid.R
 \name{fdid}
 \alias{fdid}
-\title{Fixed Difference-in-Differences Estimation (No "em", With "ebal")}
+\title{Factorial Difference-in-Differences Estimation}
 \usage{
 fdid(
   s,
   tr_period,
   ref_period,
+  entire_period = NULL,
   method = "ols1",
   vartype = "robust",
-  na.rm = FALSE,
+  missing_data = c("listwise", "available"),
   nsims = 1000,
   parallel = FALSE,
-  cores = 2
+  cores = 2,
+  ATT = FALSE
 )
 }
 \arguments{
-\item{s}{A data frame containing the dataset.}
+\item{s}{A data frame prepared using `fdid_prepare`.}
 
 \item{tr_period}{A numeric vector specifying the treatment periods.}
 
-\item{ref_period}{A numeric vector specifying the reference period(s).}
+\item{ref_period}{A numeric scalar specifying the reference period.}
 
-\item{method}{A string specifying the estimation method. Defaults to `"ols1"`.
-Options include `"ols1"`, `"ols2"`, `"did"`, `"ebal"`, and `"aipw"`.}
+\item{entire_period}{A numeric vector specifying the total range of time periods.
+If `NULL`, estimation is performed on all available time periods.
+Example: `c(1958, 1959, 1960, 1961)`.}
 
-\item{vartype}{A string specifying the variance estimation type. Defaults to `"robust"`.
-Options include `"robust"`, `"bootstrap"`, and `"jackknife"`.}
+\item{method}{A string specifying the estimation method.
+Options: `"ols1"`, `"ols2"`, `"did"`, `"ebal"`, `"aipw"`.
+Default is `"ols1"`.}
 
-\item{na.rm}{A boolean indicating whether to remove rows with missing values in
-relevant columns. Defaults to `FALSE`.}
+\item{vartype}{A string specifying the variance estimation type.
+Options: `"robust"`, `"bootstrap"`, `"jackknife"`.
+Default is `"robust"`.}
 
-\item{nsims}{An integer specifying the number of simulations for bootstrap variance
-estimation. Defaults to `1000`.}
+\item{missing_data}{How to handle missing data. Two options:
+- `"listwise"`: Drop any row missing **any** relevant column (including
+  outcomes in the periods used).
+- `"available"`: Drop rows only if they are missing in group/covariates/cluster
+  columns, but allow partial usage of outcomes.
+Default is `"listwise"`.}
 
-\item{parallel}{A boolean indicating whether to perform bootstrap or jackknife
-simulations in parallel. Defaults to `FALSE`.}
+\item{nsims}{Number of simulations for bootstrap variance estimation.
+Default is `1000`.}
 
-\item{cores}{An integer specifying the number of cores to use for parallel
-computations. Defaults to `2`.}
+\item{parallel}{Logical; whether to perform parallel computations.
+Default is `FALSE`.}
+
+\item{cores}{Number of cores for parallel computations.
+Default is `2`.}
+
+\item{ATT}{Logical; if `TRUE`, attempts to estimate the ATT by targeting
+the covariate distribution of the treated group (`G=1`). If `FALSE`,
+estimates the ATE. Not all methods can handle both; see Details.
+Default is `FALSE`.}
 }
 \value{
-A list containing:
-\itemize{
-  \item `static`: A data frame with the static FDID estimate.
-  \item `dynamic`: A data frame with dynamic FDID estimates for each year.
-  \item `raw_means`: A data frame with raw mean outcomes for treated and control groups by year.
-  \item Other metadata such as periods, method, variance type, years, group indicators, propensity scores, and the function call.
-}
+A list with the following components:
+  \item{est}{A list with three elements:
+             \code{$pre}, \code{$event}, and \code{$post} containing
+             aggregated pre-treatment, overall event, and post-treatment
+             FDID estimates, respectively.}
+  \item{dynamic}{Dynamic FDID estimates for each time in `entire_period`.}
+  \item{raw_means}{Raw mean outcomes by group for each time in `entire_period`.}
+  \item{tr_period}{Treatment periods used.}
+  \item{ref_period}{Reference period used.}
+  \item{entire_period}{All time periods for dynamic estimation.}
+  \item{method}{Method used.}
+  \item{vartype}{Variance type used.}
+  \item{times}{All numeric time columns found.}
+  \item{G}{Group indicator (0/1).}
+  \item{ps}{Propensity scores (if `aipw` method used).}
+  \item{call}{The matched call.}
+  \item{ATT}{Logical indicating whether ATT was requested.}
 }
 \description{
-The `fdid` function performs fixed difference-in-differences (FDID) estimation
-using various methods and variance estimation techniques. It automatically
-handles clustering based on the presence of a column named `"c"` in the data.
+Performs factorial difference-in-differences (FDID) estimation using various methods and variance estimation techniques.
 }
-\details{
-The function performs FDID estimation with the following steps:
-\enumerate{
-  \item Preprocesses the data, handling clustering if a `"c"` column exists.
-  \item Performs static FDID estimation using the specified method and variance type.
-  \item Performs dynamic FDID estimation across all specified years.
-  \item Calculates raw mean outcomes for treated and control groups by year.
-  \item Optionally computes propensity scores if the method requires it (e.g., `"aipw"`).
-}
+\author{
+Rivka Lipkovitz
 }

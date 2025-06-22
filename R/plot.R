@@ -1,200 +1,154 @@
 #' Plot Results from FDID Analysis
 #'
-#' Provides visualizations for FDID results, including raw means, dynamic effects, propensity score overlap, and method comparisons.
+#' Provides visualisations for FDID results, including raw means, dynamic
+#' effects, and propensity-score overlap.  The comparison plot of multiple
+#' methods has been removed; use `plot.fdid_list()` for that.
 #'
-#' @param x An `fdid` object or a list of multiple `fdid` objects.
-#' @param type Type of plot to produce: `"raw"`, `"dynamic"`, `"overlap"`, or `"est"`.
+#' @param x   An `fdid` object.
+#' @param type One of `"raw"`, `"dynamic"`, or `"overlap"`.
+#' @param connected Logical; if `TRUE`, connects points with lines in
+#'        the "raw" and "dynamic" plots.  Default is `FALSE`.
 #' @param alpha_shade Transparency for shading the treatment period.
-#' @param col_treated,col_control Colors for treated and control groups.
+#' @param palette A palette name from **RColorBrewer**.  Default `"Set2"`.
+#' @param group_labels Labels for the two groups.
 #' @param xlab,ylab,main Axis labels and main title.
-#' @param ylim Y-axis limits. Default is `NULL`.
+#' @param ylim Y-axis limits.  Default `NULL` (computed automatically).
+#' @param ...  Additional graphics parameters.
 #'
-#' @return Produces a plot. Nothing is returned.
-#'
-#' @examples
-#' plot.fdid(fdid_results, type = "raw")
-#' plot.fdid(fdid_results, type = "dynamic")
-#'
+#' @return Produces a plot; invisibly returns `NULL`.
+#' @author Rivka Lipkovitz
 #' @export
 plot.fdid <- function(x,
-                      type = c("raw", "dynamic", "overlap", "est"),
+                      type = c("raw", "dynamic", "overlap"),
+                      connected = FALSE,
                       alpha_shade = 0.2,
-                      col_treated = "red",
-                      col_control = "blue",
+                      palette = "Set2",
+                      group_labels = c("Group 0", "Group 1"),
                       xlab = NULL,
                       ylab = NULL,
                       main = NULL,
-                      ylim = NULL) {
+                      ylim = NULL,
+                      ...) {
+
   type <- match.arg(type)
 
-  # -------------------------------------------------------------------
-  # Helper for shading the treatment period, if it exists
-  # -------------------------------------------------------------------
+  if (!requireNamespace("RColorBrewer", quietly = TRUE)) {
+    stop("Please install the 'RColorBrewer' package.")
+  }
+
+  available_palettes <- rownames(RColorBrewer::brewer.pal.info)
+  if (!(palette %in% available_palettes)) {
+    stop("Palette not found. Choose from: ",
+         paste(available_palettes, collapse = ", "))
+  }
+
+  group_colors <- RColorBrewer::brewer.pal(3, palette)[1:2]
+
   shade_treatment <- function(tr_period, yrange, col = "gray") {
-    tmin <- min(tr_period)
-    tmax <- max(tr_period)
-    rect(xleft = tmin-0.5,
-         ybottom = yrange[1],
-         xright = tmax+0.5,
-         ytop = yrange[2],
+    rect(min(tr_period) - 0.5,
+         yrange[1] - 10,
+         max(tr_period) + 0.5,
+         yrange[2] + 10,
          col = adjustcolor(col, alpha.f = alpha_shade),
          border = NA)
   }
 
-  # -------------------------------------------------------------------
-  # 1) Plot RAW means
-  # -------------------------------------------------------------------
+  ## ------------------------------------------------------------------
+  ## RAW means
+  ## ------------------------------------------------------------------
   if (type == "raw") {
-    if (is.null(x$raw_means)) {
-      stop("No 'raw_means' found in 'fdid' object.")
+    rawdf <- x$raw_means
+    if (is.null(rawdf)) stop("No 'raw_means' found in the 'fdid' object.")
+    if (!all(c("time", "group", "meanY") %in% names(rawdf))) {
+      stop("'raw_means' is missing required columns.")
     }
-    rawdf <- x$raw_means  # data.frame(year, group, meanY)
-    # Quick checks
-    if (!all(c("year","group","meanY") %in% names(rawdf))) {
-      stop("raw_means missing required columns (year, group, meanY).")
-    }
-    all_years <- sort(unique(rawdf$year))
-    if (is.null(ylim)) {
-      ylim <- range(rawdf$meanY, na.rm=TRUE)
-    }
-    if (is.null(xlab)) xlab <- "Year"
-    if (is.null(ylab)) ylab <- "Mean outcome"
 
-    plot(NULL, xlim = range(all_years), ylim = ylim,
-         xlab = xlab, ylab = ylab, main = main, ...)
+    times <- sort(unique(rawdf$time))
+    if (is.null(ylim)) {
+      tmp <- range(rawdf$meanY, na.rm = TRUE)
+      ylim <- c(min(tmp[1], 0.99 * tmp[1]), max(tmp[2], 1.01 * tmp[2]))
+    }
+
+    plot(NULL, xlim = range(times), ylim = ylim,
+         xlab = xlab %||% "Time",
+         ylab = ylab %||% "Mean outcome",
+         main = main, mgp = c(2, .8, 0), ...)
     shade_treatment(x$tr_period, ylim)
 
-    # Plot lines: Treated vs Control
-    treated_sub  <- rawdf[rawdf$group=="Treated", ]
-    control_sub  <- rawdf[rawdf$group=="Control", ]
+    g1 <- rawdf[rawdf$group == "Group 1", ]
+    g0 <- rawdf[rawdf$group == "Group 0", ]
 
-    lines(treated_sub$year, treated_sub$meanY, col=col_treated, lwd=2)
-    points(treated_sub$year, treated_sub$meanY, pch=16, col=col_treated)
+    if (connected) {
+      lines(g1$time, g1$meanY, col = group_colors[2], lwd = 2)
+      lines(g0$time, g0$meanY, col = group_colors[1], lwd = 2)
+    }
+    points(g1$time, g1$meanY, pch = 16, col = group_colors[2])
+    points(g0$time, g0$meanY, pch = 16, col = group_colors[1])
 
-    lines(control_sub$year, control_sub$meanY, col=col_control, lty=2, lwd=2)
-    points(control_sub$year, control_sub$meanY, pch=1, col=col_control)
-
-    legend("topleft",
-           legend = c("Treated","Control"),
-           col = c(col_treated,col_control),
-           pch = c(16,1), lty = c(1,2), bty="n")
-
+    legend("topleft", legend = group_labels,
+           col = group_colors, pch = 16, bty = "n")
     return(invisible(NULL))
   }
 
-  # -------------------------------------------------------------------
-  # 2) Plot DYNAMIC estimates (year-by-year FDID)
-  # -------------------------------------------------------------------
+  ## ------------------------------------------------------------------
+  ## DYNAMIC effects
+  ## ------------------------------------------------------------------
   if (type == "dynamic") {
-    if (is.null(x$dynamic) || nrow(x$dynamic)==0) {
-      stop("No dynamic data found in 'x$dynamic'.")
-    }
     dyn <- x$dynamic
+    if (is.null(dyn) || nrow(dyn) == 0) stop("No dynamic data found.")
     yrs <- as.numeric(rownames(dyn))
     est <- dyn$Estimate
     lo  <- dyn$CI_Lower
     hi  <- dyn$CI_Upper
 
     if (is.null(ylim)) {
-      ylim <- range(lo, hi, na.rm=TRUE)
+      rng  <- range(lo, hi, na.rm = TRUE)
+      ylim <- c(min(rng[1], 0), max(rng[2], 0)) * 1.05
     }
-    if (is.null(xlab)) xlab <- "Year"
-    if (is.null(ylab)) ylab <- "Treatment Effect (Dynamic FDID)"
 
-    plot(yrs, est, type="n", ylim=ylim, xlab=xlab, ylab=ylab, main=main, ...)
+    plot(yrs, est, type = "n", ylim = ylim,
+         xlab = xlab %||% "Time",
+         ylab = ylab %||% "Coefficients",
+         main = main, mgp = c(2, .8, 0), ...)
+
     shade_treatment(x$tr_period, ylim)
-    abline(h=0, col="gray50", lwd=2, lty=2)
+    abline(h = 0, col = "gray50", lwd = 2, lty = 2)
 
-    # error bars
-    arrows(yrs, lo, yrs, hi, angle=90, code=3, length=0.05, col="black")
-    points(yrs, est, pch=16)
+    if (connected) lines(yrs, est, lwd = 2)
 
+    ok <- lo != hi
+    if (any(ok)) {
+      arrows(yrs[ok], lo[ok], yrs[ok], hi[ok],
+             angle = 90, code = 3, length = 0.05)
+    }
+    points(yrs, est, pch = 16)
     return(invisible(NULL))
   }
 
-  # -------------------------------------------------------------------
-  # 3) Plot OVERLAP of propensity scores
-  # -------------------------------------------------------------------
-  if (type == "overlap") {
-    if (is.null(x$ps) || is.null(x$G)) {
-      stop("'fdid' object has no stored propensity scores (x$ps) or no x$G.")
-    }
-    ps <- x$ps
-    G  <- x$G
-    # Very simple mirrored histogram approach:
+  ## ------------------------------------------------------------------
+  ## OVERLAP
+  ## ------------------------------------------------------------------
+  ps <- x$ps; G <- x$G
+  if (is.null(ps) || is.null(G)) stop("No propensity scores found.")
 
-    brks <- seq(0, 1, by=0.02)
-    # control group histogram
-    hCo <- hist(ps[G==0], breaks=brks, plot=FALSE)
-    # treated group histogram
-    hTr <- hist(ps[G==1], breaks=brks, plot=FALSE)
+  brks <- seq(0, 1, 0.02)
+  h0 <- hist(ps[G == 0], breaks = brks, plot = FALSE)
+  h1 <- hist(ps[G == 1], breaks = brks, plot = FALSE)
+  h0$density <- h0$counts / sum(h0$counts)
+  h1$density <- h1$counts / sum(h1$counts)
 
-    # convert counts to fraction (density-like)
-    hCo$density <- hCo$counts / sum(hCo$counts, na.rm=TRUE)
-    hTr$density <- hTr$counts / sum(hTr$counts, na.rm=TRUE)
-    ymax <- max(hCo$density, hTr$density)
+  maxd <- max(h0$density, h1$density)
+  ylim2 <- ylim %||% c(-maxd, maxd) * 1.1
 
-    if (is.null(ylim)) {
-      ylim <- c(-ymax, ymax)
-    }
-    if (is.null(xlab)) xlab <- "Propensity Score"
-    if (is.null(main)) main <- "Overlap of Propensity Scores"
+  plot(h0, freq = FALSE, col = adjustcolor(group_colors[1], .6), ylim = ylim2,
+       xlab = xlab %||% "Propensity Score",
+       main = main %||% "Overlap of Propensity Scores")
+  h1$density <- -h1$density
+  plot(h1, freq = FALSE, add = TRUE,
+       col = adjustcolor(group_colors[2], .6))
+  abline(h = 0, lty = 2)
+  legend("topright", legend = group_labels,
+         fill = adjustcolor(group_colors, .6), bty = "n")
 
-    plot(hCo, freq=FALSE, col=adjustcolor("blue", 0.4),
-         ylim=ylim, main=main, xlab=xlab, border=NA)
-    # Flip the treated histogram to negative for a mirrored effect
-    hTr$density <- -hTr$density
-    plot(hTr, freq=FALSE, col=adjustcolor("red", 0.4),
-         add=TRUE, border=NA)
-    abline(h=0, lty=2, col="gray50")
-
-    legend("topright", legend=c("Control","Treated"),
-           fill=c("blue","red"), border=NA, bty="n", cex=0.9)
-    return(invisible(NULL))
-  }
-
-  # -------------------------------------------------------------------
-  # 4) Plot COMPARISON of ESTIMATES if multiple methods are used
-  # -------------------------------------------------------------------
-  if (type == "est") {
-    # We assume 'x' is actually a *list* of fdid objects
-    if (!is.list(x)) {
-      stop("For type='est', supply a list of 'fdid' objects, each from a different method.")
-    }
-    # each element should have x[[i]]$static => single row
-    est_list <- lapply(x, function(obj) {
-      st <- obj$static
-      if (is.null(st) || nrow(st)==0) {
-        stop("One of the list elements has no $static result.")
-      }
-      data.frame(method   = obj$method,
-                 Estimate = st$Estimate,
-                 CI_Lower = st$CI_Lower,
-                 CI_Upper = st$CI_Upper)
-    })
-    est_df <- do.call(rbind, est_list)
-    n <- nrow(est_df)
-    if (is.null(ylim)) {
-      ylim <- range(c(est_df$CI_Lower, est_df$CI_Upper), na.rm=TRUE)
-    }
-    if (is.null(xlab)) xlab <- "Estimate"
-    if (is.null(ylab)) ylab <- ""
-    if (is.null(main)) main <- "Comparison of FDID Estimates"
-
-    # base R dot-whisker style
-    par(mar = c(5, 8, 2, 2))
-    plot(NA, xlim = ylim, ylim = c(0.5, n + 0.5),
-         ylab = "", xlab = xlab, main = main, yaxt="n")
-    abline(v = 0, lty=2, col="gray50") # reference line
-    axis(2, at = seq_len(n), labels = est_df$method, las=1)
-
-    for (i in seq_len(n)) {
-      segments(x0 = est_df$CI_Lower[i], x1 = est_df$CI_Upper[i],
-               y0 = i, y1 = i, lwd=2)
-    }
-    points(est_df$Estimate, seq_len(n), pch=16)
-    box()
-
-    return(invisible(NULL))
-  }
+  invisible(NULL)
 }

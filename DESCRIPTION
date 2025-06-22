@@ -1,12 +1,30 @@
 Package: fdid
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Factorial Difference-in-Differences
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Date: 2025-06-20
+Authors@R:
+    c(person("Rivka", "Lipkovitz", email = "rivkal@mit.edu",
+             role = c("aut")))
+Description: Implements the factorial difference-in-differences (FDID) framework for panel data with multi-period or staggered treatments. Provides OLS (with / without interactions), DID, entropy balancing, and augmented IPW estimators; supports robust, bootstrap, and jackknife variance; returns dynamic, pre/event/post aggregates and raw means; and includes helpers for data preparation and plotting.
+    Methodology follows Xu, Zhao & Ding (2024) <arXiv:2407.11937>.
+URL: https://github.com/xuyiqing/fdid
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
+Imports:
+    estimatr,
+    dplyr,
+    tidyr,
+    rlang,
+    tidyselect,
+    RColorBrewer,
+    foreach,
+    doParallel,
+    ebal,
+    grf,
+    car,
+    sandwich
+Depends: R (>= 3.6.0)
 RoxygenNote: 7.3.2
+NeedsCompilation: no

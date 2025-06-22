@@ -2,14 +2,15 @@
 % Please edit documentation in R/plot.R
 \name{plot.fdid}
 \alias{plot.fdid}
-\title{Plot method for 'fdid' objects}
+\title{Plot Results from FDID Analysis}
 \usage{
 \method{plot}{fdid}(
   x,
-  type = c("raw", "dynamic", "overlap", "est"),
+  type = c("raw", "dynamic", "overlap"),
+  connected = FALSE,
   alpha_shade = 0.2,
-  col_treated = "red",
-  col_control = "blue",
+  palette = "Set2",
+  group_labels = c("Group 0", "Group 1"),
   xlab = NULL,
   ylab = NULL,
   main = NULL,
@@ -18,24 +19,33 @@
 )
 }
 \arguments{
-\item{x}{An object of class 'fdid', or a list of multiple 'fdid' objects
-(if type='est').}
+\item{x}{An `fdid` object.}
 
-\item{type}{The type of plot to produce: "raw", "dynamic", "overlap", or "est".}
+\item{type}{One of `"raw"`, `"dynamic"`, or `"overlap"`.}
 
-\item{alpha_shade}{Transparency level for shading the treatment period.}
+\item{connected}{Logical; if `TRUE`, connects points with lines in
+the "raw" and "dynamic" plots.  Default is `FALSE`.}
 
-\item{col_treated, col_control}{Colors for treated vs. control lines (raw means).}
+\item{alpha_shade}{Transparency for shading the treatment period.}
+
+\item{palette}{A palette name from **RColorBrewer**.  Default `"Set2"`.}
+
+\item{group_labels}{Labels for the two groups.}
 
 \item{xlab, ylab, main}{Axis labels and main title.}
 
-\item{ylim}{User-specified y-axis limits (optional).}
+\item{ylim}{Y-axis limits.  Default `NULL` (computed automatically).}
 
-\item{...}{Further arguments passed to internal plotting functions.}
+\item{...}{Additional graphics parameters.}
 }
 \value{
-A base R plot is produced. Nothing is returned.
+Produces a plot; invisibly returns `NULL`.
 }
 \description{
-Plot method for 'fdid' objects
+Provides visualisations for FDID results, including raw means, dynamic
+effects, and propensity-score overlap.  The comparison plot of multiple
+methods has been removed; use `plot.fdid_list()` for that.
+}
+\author{
+Rivka Lipkovitz
 }

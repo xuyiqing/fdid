@@ -423,7 +423,6 @@ div.csl-indent {
 </div>
 <p>Common options:</p>
 <ul>
-<li><p><code>palette</code> changes colors.</p></li>
 <li><p><code>xlab</code> and <code>main</code> change labels/titles.</p></li>
 <li><p><code>ylim</code> sets the range of the estimates axis.</p></li>
 </ul>
@@ -442,7 +441,7 @@ div.csl-indent {
 <div class="cell">
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/fdid/man/fdid_list.html">fdid_list</a></span><span class="op">(</span><span class="va">fdid_results_did</span>, <span class="va">fdid_results_ols1</span>, </span>
 <span>               <span class="va">fdid_results_ols2</span>, <span class="va">fdid_results_ebal</span>, <span class="va">fdid_results_aipw</span><span class="op">)</span>,</span>
-<span>     palette <span class="op">=</span> <span class="st">"Set1"</span>, xlab <span class="op">=</span> <span class="st">'Static Estimates'</span>,</span>
+<span>     xlab <span class="op">=</span> <span class="st">'Static Estimates'</span>,</span>
 <span>     main <span class="op">=</span> <span class="st">'Comparing Differenct Methods'</span>, vertical <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>     ylim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">10</span>,<span class="fl">10</span><span class="op">)</span></span>
 <span>     <span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -1195,37 +1194,35 @@ Xu, Yiqing, Anqi Zhao, and Peng Ding. 2026. <span>“Factorial Difference-in-Dif
 <span id="cb19-284"><a href="#cb19-284" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-285"><a href="#cb19-285" aria-hidden="true" tabindex="-1"></a>Common options:</span>
 <span id="cb19-286"><a href="#cb19-286" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-287"><a href="#cb19-287" aria-hidden="true" tabindex="-1"></a><span class="ss">-   </span><span class="in">`palette`</span> changes colors.</span>
+<span id="cb19-287"><a href="#cb19-287" aria-hidden="true" tabindex="-1"></a><span class="ss">-   </span><span class="in">`xlab`</span> and <span class="in">`main`</span> change labels/titles.</span>
 <span id="cb19-288"><a href="#cb19-288" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-289"><a href="#cb19-289" aria-hidden="true" tabindex="-1"></a><span class="ss">-   </span><span class="in">`xlab`</span> and <span class="in">`main`</span> change labels/titles.</span>
+<span id="cb19-289"><a href="#cb19-289" aria-hidden="true" tabindex="-1"></a><span class="ss">-   </span><span class="in">`ylim`</span> sets the range of the estimates axis.</span>
 <span id="cb19-290"><a href="#cb19-290" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-291"><a href="#cb19-291" aria-hidden="true" tabindex="-1"></a><span class="ss">-   </span><span class="in">`ylim`</span> sets the range of the estimates axis.</span>
-<span id="cb19-292"><a href="#cb19-292" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-295"><a href="#cb19-295" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb19-296"><a href="#cb19-296" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="fu">fdid_list</span>(fdid_results_did, fdid_results_ols1, fdid_results_ols2, </span>
-<span id="cb19-297"><a href="#cb19-297" aria-hidden="true" tabindex="-1"></a>               fdid_results_ebal, fdid_results_aipw),</span>
-<span id="cb19-298"><a href="#cb19-298" aria-hidden="true" tabindex="-1"></a>     <span class="at">ylim =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">5</span>,<span class="dv">5</span>)</span>
-<span id="cb19-299"><a href="#cb19-299" aria-hidden="true" tabindex="-1"></a>     )</span>
-<span id="cb19-300"><a href="#cb19-300" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb19-301"><a href="#cb19-301" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-304"><a href="#cb19-304" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb19-305"><a href="#cb19-305" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="fu">fdid_list</span>(fdid_results_did, fdid_results_ols1, </span>
-<span id="cb19-306"><a href="#cb19-306" aria-hidden="true" tabindex="-1"></a>               fdid_results_ols2, fdid_results_ebal, fdid_results_aipw),</span>
-<span id="cb19-307"><a href="#cb19-307" aria-hidden="true" tabindex="-1"></a>     <span class="at">palette =</span> <span class="st">"Set1"</span>, <span class="at">xlab =</span> <span class="st">'Static Estimates'</span>,</span>
-<span id="cb19-308"><a href="#cb19-308" aria-hidden="true" tabindex="-1"></a>     <span class="at">main =</span> <span class="st">'Comparing Differenct Methods'</span>, <span class="at">vertical =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb19-309"><a href="#cb19-309" aria-hidden="true" tabindex="-1"></a>     <span class="at">ylim =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">10</span>,<span class="dv">10</span>)</span>
-<span id="cb19-310"><a href="#cb19-310" aria-hidden="true" tabindex="-1"></a>     )</span>
-<span id="cb19-311"><a href="#cb19-311" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb19-293"><a href="#cb19-293" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb19-294"><a href="#cb19-294" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="fu">fdid_list</span>(fdid_results_did, fdid_results_ols1, fdid_results_ols2, </span>
+<span id="cb19-295"><a href="#cb19-295" aria-hidden="true" tabindex="-1"></a>               fdid_results_ebal, fdid_results_aipw),</span>
+<span id="cb19-296"><a href="#cb19-296" aria-hidden="true" tabindex="-1"></a>     <span class="at">ylim =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">5</span>,<span class="dv">5</span>)</span>
+<span id="cb19-297"><a href="#cb19-297" aria-hidden="true" tabindex="-1"></a>     )</span>
+<span id="cb19-298"><a href="#cb19-298" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb19-299"><a href="#cb19-299" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-302"><a href="#cb19-302" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb19-303"><a href="#cb19-303" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="fu">fdid_list</span>(fdid_results_did, fdid_results_ols1, </span>
+<span id="cb19-304"><a href="#cb19-304" aria-hidden="true" tabindex="-1"></a>               fdid_results_ols2, fdid_results_ebal, fdid_results_aipw),</span>
+<span id="cb19-305"><a href="#cb19-305" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab =</span> <span class="st">'Static Estimates'</span>,</span>
+<span id="cb19-306"><a href="#cb19-306" aria-hidden="true" tabindex="-1"></a>     <span class="at">main =</span> <span class="st">'Comparing Differenct Methods'</span>, <span class="at">vertical =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb19-307"><a href="#cb19-307" aria-hidden="true" tabindex="-1"></a>     <span class="at">ylim =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">10</span>,<span class="dv">10</span>)</span>
+<span id="cb19-308"><a href="#cb19-308" aria-hidden="true" tabindex="-1"></a>     )</span>
+<span id="cb19-309"><a href="#cb19-309" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb19-310"><a href="#cb19-310" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-311"><a href="#cb19-311" aria-hidden="true" tabindex="-1"></a>The labels reflect <span class="in">`method`</span>, and add <span class="in">`vartype`</span> when it is not the default <span class="in">`"robust"`</span>. Other settings (e.g., <span class="in">`target.pop`</span>) are not currently shown in the labels.</span>
 <span id="cb19-312"><a href="#cb19-312" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-313"><a href="#cb19-313" aria-hidden="true" tabindex="-1"></a>The labels reflect <span class="in">`method`</span>, and add <span class="in">`vartype`</span> when it is not the default <span class="in">`"robust"`</span>. Other settings (e.g., <span class="in">`target.pop`</span>) are not currently shown in the labels.</span>
-<span id="cb19-314"><a href="#cb19-314" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-317"><a href="#cb19-317" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb19-318"><a href="#cb19-318" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="fu">fdid_list</span>(fdid_results_ols1, fdid_results_ols1_boot,</span>
-<span id="cb19-319"><a href="#cb19-319" aria-hidden="true" tabindex="-1"></a>               fdid_results_ols1_jack, fdid_results_ols2, fdid_results_ols2_target_1,</span>
-<span id="cb19-320"><a href="#cb19-320" aria-hidden="true" tabindex="-1"></a>               fdid_results_aipw),</span>
-<span id="cb19-321"><a href="#cb19-321" aria-hidden="true" tabindex="-1"></a>     <span class="at">ylim =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">5</span>,<span class="dv">1</span>), <span class="at">vertical =</span> <span class="cn">TRUE</span></span>
-<span id="cb19-322"><a href="#cb19-322" aria-hidden="true" tabindex="-1"></a>     )</span>
-<span id="cb19-323"><a href="#cb19-323" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb19-315"><a href="#cb19-315" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb19-316"><a href="#cb19-316" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="fu">fdid_list</span>(fdid_results_ols1, fdid_results_ols1_boot,</span>
+<span id="cb19-317"><a href="#cb19-317" aria-hidden="true" tabindex="-1"></a>               fdid_results_ols1_jack, fdid_results_ols2, fdid_results_ols2_target_1,</span>
+<span id="cb19-318"><a href="#cb19-318" aria-hidden="true" tabindex="-1"></a>               fdid_results_aipw),</span>
+<span id="cb19-319"><a href="#cb19-319" aria-hidden="true" tabindex="-1"></a>     <span class="at">ylim =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">5</span>,<span class="dv">1</span>), <span class="at">vertical =</span> <span class="cn">TRUE</span></span>
+<span id="cb19-320"><a href="#cb19-320" aria-hidden="true" tabindex="-1"></a>     )</span>
+<span id="cb19-321"><a href="#cb19-321" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 </code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->

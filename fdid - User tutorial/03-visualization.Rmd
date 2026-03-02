@@ -254,8 +254,6 @@ plot(fdid_list(fdid_results_did, fdid_results_ols1, fdid_results_ols2,
 
 Common options:
 
--   `palette` changes colors.
-
 -   `xlab` and `main` change labels/titles.
 
 -   `ylim` sets the range of the estimates axis.
@@ -270,7 +268,7 @@ plot(fdid_list(fdid_results_did, fdid_results_ols1, fdid_results_ols2,
 ```{r}
 plot(fdid_list(fdid_results_did, fdid_results_ols1, 
                fdid_results_ols2, fdid_results_ebal, fdid_results_aipw),
-     palette = "Set1", xlab = 'Static Estimates',
+     xlab = 'Static Estimates',
      main = 'Comparing Differenct Methods', vertical = FALSE,
      ylim = c(-10,10)
      )

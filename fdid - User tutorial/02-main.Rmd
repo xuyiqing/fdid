@@ -110,7 +110,7 @@ The reason why OLS is problematic here is the same as the issue with running a t
 
 Use `method` to choose an estimator:
 
--   `"did"`: OLS without covariates (i.e. 2\$\times\$2 DID).
+-   `"did"`: OLS without covariates (i.e. $2\times2$ DID).
 -   `"ols1"`: OLS with covariates but no interactions.
 -   `"ols2"`: OLS with covariates and interactions.
 -   `"ebal"`: Entropy balancing.
@@ -125,7 +125,7 @@ By setting `method = 'did'`, the estimated model is the no-covariate specificati
 $$
 \Delta Y_i=\beta_0+\beta_G G_i+\varepsilon_i
 $$ 
-Here, $\beta_G$ is a cross-sectional analogue of the canonical $2\times 2$ DID estimand.
+Here, $\beta_G$ is a cross-sectional analogue of the canonical $2\times2$ DID estimand.
 
 ```{r did}
 fdid_results_did <- fdid(

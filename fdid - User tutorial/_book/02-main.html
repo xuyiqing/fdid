@@ -410,7 +410,7 @@ window.Quarto = {
 <p>Use <code>method</code> to choose an estimator:</p>
 <ul>
 <li>
-<code>"did"</code>: OLS without covariates (i.e.&nbsp;2$$2 DID).</li>
+<code>"did"</code>: OLS without covariates (i.e.&nbsp;<span class="math inline">\(2\times2\)</span> DID).</li>
 <li>
 <code>"ols1"</code>: OLS with covariates but no interactions.</li>
 <li>
@@ -427,7 +427,7 @@ window.Quarto = {
 <span class="header-section-number">2.3.1</span> Difference-in-Differences</h3>
 <p>By setting <code>method = 'did'</code>, the estimated model is the no-covariate specification: <span class="math display">\[
 \Delta Y_i=\beta_0+\beta_G G_i+\varepsilon_i
-\]</span> Here, <span class="math inline">\(\beta_G\)</span> is a cross-sectional analogue of the canonical <span class="math inline">\(2\times 2\)</span> DID estimand.</p>
+\]</span> Here, <span class="math inline">\(\beta_G\)</span> is a cross-sectional analogue of the canonical <span class="math inline">\(2\times2\)</span> DID estimand.</p>
 <div class="cell">
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">fdid_results_did</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/fdid/man/fdid.html">fdid</a></span><span class="op">(</span></span>
 <span>  s <span class="op">=</span> <span class="va">prepared_d</span>,</span>
@@ -1994,7 +1994,7 @@ Xu, Yiqing, Anqi Zhao, and Peng Ding. 2026. <span>“Factorial Difference-in-Dif
 <span id="cb43-110"><a href="#cb43-110" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb43-111"><a href="#cb43-111" aria-hidden="true" tabindex="-1"></a>Use <span class="in">`method`</span> to choose an estimator:</span>
 <span id="cb43-112"><a href="#cb43-112" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb43-113"><a href="#cb43-113" aria-hidden="true" tabindex="-1"></a><span class="ss">-   </span><span class="in">`"did"`</span>: OLS without covariates (i.e. 2\$\times\$2 DID).</span>
+<span id="cb43-113"><a href="#cb43-113" aria-hidden="true" tabindex="-1"></a><span class="ss">-   </span><span class="in">`"did"`</span>: OLS without covariates (i.e. $2\times2$ DID).</span>
 <span id="cb43-114"><a href="#cb43-114" aria-hidden="true" tabindex="-1"></a><span class="ss">-   </span><span class="in">`"ols1"`</span>: OLS with covariates but no interactions.</span>
 <span id="cb43-115"><a href="#cb43-115" aria-hidden="true" tabindex="-1"></a><span class="ss">-   </span><span class="in">`"ols2"`</span>: OLS with covariates and interactions.</span>
 <span id="cb43-116"><a href="#cb43-116" aria-hidden="true" tabindex="-1"></a><span class="ss">-   </span><span class="in">`"ebal"`</span>: Entropy balancing.</span>
@@ -2009,7 +2009,7 @@ Xu, Yiqing, Anqi Zhao, and Peng Ding. 2026. <span>“Factorial Difference-in-Dif
 <span id="cb43-125"><a href="#cb43-125" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb43-126"><a href="#cb43-126" aria-hidden="true" tabindex="-1"></a>\Delta Y_i=\beta_0+\beta_G G_i+\varepsilon_i</span>
 <span id="cb43-127"><a href="#cb43-127" aria-hidden="true" tabindex="-1"></a>$$ </span>
-<span id="cb43-128"><a href="#cb43-128" aria-hidden="true" tabindex="-1"></a>Here, $\beta_G$ is a cross-sectional analogue of the canonical $2\times 2$ DID estimand.</span>
+<span id="cb43-128"><a href="#cb43-128" aria-hidden="true" tabindex="-1"></a>Here, $\beta_G$ is a cross-sectional analogue of the canonical $2\times2$ DID estimand.</span>
 <span id="cb43-129"><a href="#cb43-129" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb43-130"><a href="#cb43-130" aria-hidden="true" tabindex="-1"></a><span class="in">```{r did}</span></span>
 <span id="cb43-131"><a href="#cb43-131" aria-hidden="true" tabindex="-1"></a>fdid_results_did <span class="ot">&lt;-</span> <span class="fu">fdid</span>(</span>

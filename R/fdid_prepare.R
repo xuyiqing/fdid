@@ -60,7 +60,7 @@ fdid_prepare <- function(data,
       id_cols     = tidyselect::all_of(unit_label),
       names_from  = tidyselect::all_of(time_label),
       values_from = tidyselect::all_of(Y_label),
-      names_prefix = ""  # keep the time values as column names
+      names_prefix = "Y_"  # keep the time values as column names
     )
 
   # 2. Average the time-varying covariates using older dplyr syntax

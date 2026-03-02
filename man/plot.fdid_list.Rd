@@ -6,19 +6,17 @@
 \usage{
 \method{plot}{fdid_list}(
   x,
-  palette = "Set2",
   xlab = NULL,
   ylab = NULL,
   main = NULL,
   ylim = NULL,
   vertical = TRUE,
+  show_vartype = TRUE,
   ...
 )
 }
 \arguments{
 \item{x}{An object of class `"fdid_list"`.}
-
-\item{palette}{A palette name from **RColorBrewer**. Defaults to `"Set2"`.}
 
 \item{xlab, }{ylab, main Axis labels and title. If `NULL`, sensible defaults are used.}
 
@@ -27,9 +25,9 @@
 
 \item{vertical}{Logical; default is \code{TRUE}.}
 
-\item{...}{Additional graphics parameters passed to \code{plot()}.}
-
 \item{show_vartype}{Logical; include vartype in labels. Default is \code{TRUE}.}
+
+\item{...}{Additional graphics parameters passed to \code{plot()}.}
 }
 \value{
 Invisibly returns `x`; called for its side-effect of drawing a plot.

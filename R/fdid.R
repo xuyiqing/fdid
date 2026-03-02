@@ -69,6 +69,9 @@ fdid <- function(s,
                  cores    = 2,
                  target.pop = c("all","1","0")) {
 
+  # Helper: convert a numeric time value to its Y_-prefixed column name
+  ycol <- function(t) paste0("Y_", t)
+  
   # Helper to suppress ebal output:
   silent_ebalance <- function(Treatment, X) {
     tf_con <- file(tempfile(), open = "wt")
@@ -130,24 +133,21 @@ fdid <- function(s,
     ref_period <- max(ref_period)
   }
 
-  # Identify numeric columns that might be outcomes
-  all_cols_numeric <- names(s)[sapply(s, is.numeric)]
-  exclude <- c("G", covar)
-  if (!is.null(cluster)) exclude <- c(exclude, cluster)
-  numeric_time_cols <- setdiff(all_cols_numeric, exclude)
-  numeric_times <- suppressWarnings(as.numeric(numeric_time_cols))
+  # Identify outcome columns with Y_ prefix (e.g. Y_2021, Y_1958)
+  all_y_cols <- grep("^Y_[-]?[0-9]+(\\.[0-9]+)?$", names(s), value = TRUE)
+  numeric_times <- suppressWarnings(as.numeric(sub("^Y_", "", all_y_cols)))
   numeric_times <- numeric_times[!is.na(numeric_times)]
   numeric_times <- sort(unique(numeric_times))
 
   # Check user-supplied time columns
-  Y_tr_cols <- as.character(tr_period)
-  Y_ref_col <- as.character(ref_period)
-  missing_tr <- setdiff(Y_tr_cols, numeric_time_cols)
+  Y_tr_cols <- ycol(tr_period)
+  Y_ref_col <- ycol(ref_period)
+  missing_tr <- setdiff(Y_tr_cols, names(s))
   if (length(missing_tr) > 0) {
     stop("Some treatment-time columns not found in data: ",
          paste(missing_tr, collapse=", "))
   }
-  if (!(Y_ref_col %in% numeric_time_cols)) {
+  if (!(Y_ref_col %in% names(s))) {
     stop("Reference-time column '", Y_ref_col, "' not found in data.")
   }
 
@@ -163,7 +163,7 @@ fdid <- function(s,
   }
 
   if (missing_data == "listwise") {
-    needed_cols_all <- c(needed_cols_minimal, as.character(all_times))
+    needed_cols_all <- c(needed_cols_minimal, ycol(all_times))
     s <- s[complete.cases(s[, needed_cols_all, drop=FALSE]), ]
   } else {
     # "available": only remove missing in G, covars, cluster
@@ -517,8 +517,8 @@ fdid <- function(s,
       # By definition, the reference period effect is 0
       dynamic_df[i, ] <- 0
     } else {
-      t_col <- as.character(t_yr)
-      ref_col <- as.character(last_ref_num)
+      t_col <- ycol(t_yr)
+      ref_col <- ycol(last_ref_num)
       d_dyn <- s
       d_dyn$tempY <- d_dyn[[t_col]] - d_dyn[[ref_col]]
       d_dyn <- d_dyn[!is.na(d_dyn$tempY), , drop=FALSE]
@@ -543,7 +543,7 @@ fdid <- function(s,
 
   
   for (yr in dynamic_times) {
-    col_yr <- as.character(yr)
+    col_yr <- ycol(yr)
     if (!col_yr %in% names(s)) {
       warning("Column '", col_yr, "' not found in data. Skipping raw_means.")
       next
@@ -611,7 +611,7 @@ fdid <- function(s,
       return(c(Estimate=NA, Std.Error=NA, CI_Lower=NA, CI_Upper=NA))
     }
     
-    time_cols <- setdiff(unique(as.character(time_vec)), ref_col)
+    time_cols <- setdiff(unique(ycol(time_vec)), ref_col)
     if (length(time_cols) == 0L) {
       return(c(Estimate=NA, Std.Error=NA, CI_Lower=NA, CI_Upper=NA))
     }

@@ -416,7 +416,7 @@ Default: `"listwise"`.
 In the example below, we create missing values to show how the two options differ.
 
 ```{r d_missing}
-d_missing <- d_package
+d_missing <- mortality
 # missing partial outcomes
 d_missing$mortality[c(1:3, 101:102, 205:207)] <- NA
 # missing covariates

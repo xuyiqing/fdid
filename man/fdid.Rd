@@ -55,8 +55,8 @@ Default is \code{FALSE}.}
 \item{cores}{Number of cores for parallel computations.
 Default is \code{2}.}
 
-\item{target.pop}{Character; the target population for averaging: \code{"all"}, \code{"1"}, or \code{"0"}. 
-\code{"all"} corresponds to the full sample. \code{"1"} targets the \code{G=1} population. 
+\item{target.pop}{Character; the target population for averaging: \code{"all"}, \code{"1"}, or \code{"0"}.
+\code{"all"} corresponds to the full sample. \code{"1"} targets the \code{G=1} population.
 \code{"0"} targets the \code{G=0} population. Default is \code{"all"}.}
 }
 \value{

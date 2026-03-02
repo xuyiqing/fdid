@@ -4,7 +4,7 @@
 #' every element of an `fdid_list`.
 #'
 #' @param x An object of class `"fdid_list"`.
-#' @param xlab, ylab, main Axis labels and title. If `NULL`, sensible defaults are used.
+#' @param xlab,ylab,main Axis labels and title. If `NULL`, sensible defaults are used.
 #' @param ylim Optional numeric vector of length two giving the *estimate-axis* limits.
 #'   (Backward compatible: for horizontal plots this is the x-limit; for vertical plots this is the y-limit.)
 #' @param vertical Logical; default is \code{TRUE}.

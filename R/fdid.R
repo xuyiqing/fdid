@@ -28,8 +28,8 @@
 #'   Default is \code{FALSE}.
 #' @param cores Number of cores for parallel computations.
 #'   Default is \code{2}.
-#' @param target.pop Character; the target population for averaging: \code{"all"}, \code{"1"}, or \code{"0"}. 
-#'   \code{"all"} corresponds to the full sample. \code{"1"} targets the \code{G=1} population. 
+#' @param target.pop Character; the target population for averaging: \code{"all"}, \code{"1"}, or \code{"0"}.
+#'   \code{"all"} corresponds to the full sample. \code{"1"} targets the \code{G=1} population.
 #'   \code{"0"} targets the \code{G=0} population. Default is \code{"all"}.
 #'
 #' @return A list with the following components:
@@ -71,7 +71,7 @@ fdid <- function(s,
 
   # Helper: convert a numeric time value to its Y_-prefixed column name
   ycol <- function(t) paste0("Y_", t)
-  
+
   # Helper to suppress ebal output:
   silent_ebalance <- function(Treatment, X) {
     tf_con <- file(tempfile(), open = "wt")
@@ -99,8 +99,6 @@ fdid <- function(s,
   if (!requireNamespace("car", quietly=TRUE)) {
     stop("Package 'car' not installed. Please install it.")
   }
-  library(foreach)
-  library(doParallel)
 
   # If there's a cluster column, store its name
   cluster <- if ("c" %in% names(s)) "c" else NULL
@@ -249,18 +247,18 @@ fdid <- function(s,
     # Mean of each (scaled) covariate in each group
     X_bar1 <- colMeans(X[Z == 1, , drop = FALSE])
     X_bar0 <- colMeans(X[Z == 0, , drop = FALSE])
-    
+
     xbar <- switch(target.pop,
                    "1"   = X_bar1,
                    "0"   = X_bar0,
                    "all" = rep(0, ncol(X))
     )
-    
+
     # — Point estimate at chosen xbar:
     beta_Z  <- coefs["Z"]
     beta_ZX <- coefs[int_names]
     est_super <- beta_Z + sum(beta_ZX * xbar)
-    
+
     # — Variance matrix
     if (is.null(cluster)) {
       V <- car::hccm(linmod)                      # HC0
@@ -321,17 +319,17 @@ fdid <- function(s,
     names(cfit) <- c("Estimate","Std.Error","CI_Lower","CI_Upper")
     cfit
   }
-  
+
   # IPW estimation using grf::probability_forest
   est_ipw <- function(d, covar) {
     if (!requireNamespace("grf", quietly = TRUE)) {
       stop("Method 'ipw' requires the 'grf' package.")
     }
-    
+
     X <- d[, covar, drop = FALSE]
     Y <- d$tempY
     W <- d$G
-    
+
     # 1) propensity score
     if (length(covar) == 0) {
       ps <- rep(mean(W, na.rm = TRUE), nrow(d))
@@ -339,18 +337,18 @@ fdid <- function(s,
       pf <- grf::probability_forest(X = X, Y = as.factor(W), seed = 1234)
       ps <- pf$predictions[, 2]
     }
-    
+
     # avoid 0/1 probabilities (infinite weights)
     eps <- 1e-6
     ps <- pmin(pmax(as.numeric(ps), eps), 1 - eps)
-    
+
     # 2) weights: ATT vs ATE
     wts <- switch(target.pop,
                   "1"   = ifelse(W == 1, 1, ps / (1 - ps)),          # ATT
                   "0"   = ifelse(W == 1, (1 - ps) / ps, 1),          # ATC
                   "all" = ifelse(W == 1, 1 / ps, 1 / (1 - ps))       # ATE
     )
-    
+
     # 3) weighted regression (robust SE, optional cluster like other est_*)
     fml <- tempY ~ G
     if (is.null(cluster)) {
@@ -361,11 +359,11 @@ fdid <- function(s,
         clusters = d[[cluster]]
       )
     }
-    
+
     # align with aipw style: construct a named vector 'ipw'
     cfit <- summary(mod)$coefficients["G", c(1, 2)]
     ipw  <- c(estimate = as.numeric(cfit[1]), std.err = as.numeric(cfit[2]))
-    
+
     est <- as.numeric(ipw["estimate"])
     se_ <- as.numeric(ipw["std.err"])
     c(
@@ -529,7 +527,7 @@ fdid <- function(s,
 
   # ----- Raw means by group & time (with 95% CI) -----
   zval <- stats::qnorm(0.975)
-  
+
   rawdf <- data.frame(
     time     = numeric(0),
     group    = character(0),
@@ -539,25 +537,25 @@ fdid <- function(s,
     CI_Lower = numeric(0),
     CI_Upper = numeric(0)
   )
-  
 
-  
+
+
   for (yr in dynamic_times) {
     col_yr <- ycol(yr)
     if (!col_yr %in% names(s)) {
       warning("Column '", col_yr, "' not found in data. Skipping raw_means.")
       next
     }
-    
+
     y1 <- s[[col_yr]][s$G == 1]
     y0 <- s[[col_yr]][s$G == 0]
-    
+
     n1 <- sum(!is.na(y1)); m1 <- mean(y1, na.rm = TRUE)
     n0 <- sum(!is.na(y0)); m0 <- mean(y0, na.rm = TRUE)
-    
+
     se1 <- if (n1 <= 1) NA_real_ else stats::sd(y1, na.rm = TRUE) / sqrt(n1)
     se0 <- if (n0 <= 1) NA_real_ else stats::sd(y0, na.rm = TRUE) / sqrt(n0)
-    
+
     rawdf <- rbind(
       rawdf,
       data.frame(
@@ -610,18 +608,18 @@ fdid <- function(s,
     if (length(time_vec) == 0) {
       return(c(Estimate=NA, Std.Error=NA, CI_Lower=NA, CI_Upper=NA))
     }
-    
+
     time_cols <- setdiff(unique(ycol(time_vec)), ref_col)
     if (length(time_cols) == 0L) {
       return(c(Estimate=NA, Std.Error=NA, CI_Lower=NA, CI_Upper=NA))
     }
-    
+
     d_agg <- sdata
-    
+
     tmp <- rowMeans(d_agg[, time_cols, drop = FALSE], na.rm = TRUE)
     tmp[is.nan(tmp)] <- NA_real_
     d_agg$tempY <- tmp - d_agg[[ref_col]]
-    
+
     d_agg <- d_agg[!is.na(d_agg$tempY), , drop=FALSE]
     get_estimate(d_agg, method, vartype, covar)
   }

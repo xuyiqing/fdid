@@ -1,2 +1,8 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^LICENSE\.md$
+^fdid - User tutorial$
+^Table1\.dta$
+^demonstration\.Rmd$
+^test\.R$
+^test2\.R$

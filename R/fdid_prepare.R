@@ -51,9 +51,6 @@ fdid_prepare <- function(data,
                              time_label,
                              cluster_label = NULL) {
 
-  library(dplyr)
-  library(tidyr)
-
   # 1. Pivot the outcome to wide
   wide_data <- data %>%
     tidyr::pivot_wider(

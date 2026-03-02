@@ -18,7 +18,7 @@
 \arguments{
 \item{x}{An object of class `"fdid_list"`.}
 
-\item{xlab, }{ylab, main Axis labels and title. If `NULL`, sensible defaults are used.}
+\item{xlab, ylab, main}{Axis labels and title. If `NULL`, sensible defaults are used.}
 
 \item{ylim}{Optional numeric vector of length two giving the *estimate-axis* limits.
 (Backward compatible: for horizontal plots this is the x-limit; for vertical plots this is the y-limit.)}

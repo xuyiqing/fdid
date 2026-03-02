@@ -1,3 +1,5 @@
+utils::globalVariables("tr_period")
+
 #' Summary Method for FDID Objects
 #'
 #' @param object An object of class \code{fdid}.
@@ -54,7 +56,7 @@ summary.fdid <- function(object, ...) {
   cat(" ", sep, "\n")
   cat(fmt_header(), "\n")
   cat(" ", sep, "\n")
-  
+
   # Helper: check if an estimate row is valid (not all NA)
   is_valid <- function(df) {
     !is.null(df) && !all(is.na(df$Estimate))

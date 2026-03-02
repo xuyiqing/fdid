@@ -1,9 +1,12 @@
 ---
 title: "FDID Package Demonstration"
 author: "Rivka Lipkovitz"
-output: pdf_document
-editor_options: 
-  markdown: 
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+editor_options:
+  markdown:
     wrap: 72
 ---
 

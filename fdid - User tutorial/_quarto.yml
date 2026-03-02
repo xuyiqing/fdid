@@ -1,0 +1,34 @@
+project:
+  type: book
+
+book:
+  title: "fdid -- User Tutorial"
+  sidebar:
+    style: docked
+    background: light
+  chapters:
+    - index.qmd
+    - 01-start.Rmd
+    - 02-main.Rmd
+    - 03-visualization.Rmd
+    - references.qmd
+
+delete_merged_file: true
+
+bibliography: references.bib
+
+nocite: |
+  @*
+
+format:
+  html:
+    theme: cosmo
+    df-print: paged
+    code-fold: false
+    code-tools: true
+    code-link: true
+  
+knitr:
+  opts_chunk: 
+    collapse: true
+    comment: "#>" 

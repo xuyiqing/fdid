@@ -1,0 +1,504 @@
+# FDID Main Program {#sec-main}
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE, message = FALSE, warning = FALSE)
+```
+
+In this chapter, we outline the complete workflow for an FDID analysis, which includes preparing the dataset, performing the estimation, and plotting the results.
+
+```{r library}
+library(fdid)
+data(fdid)
+```
+
+## Data preparation
+
+Before calling `fdid_prepare()`, make sure
+
+-   each unit has a unique identifier across time;
+-   the baseline factor $G$ is coded as a 0/1 variable. To match the current implementation (binary $G$), we define
+    -   $G=1$ for counties above the median social-capital measure;
+    -   $G=0$ for counties below the median.
+
+```{r gen}
+mortality$uniqueid <- paste(as.character(mortality$provid), as.character(mortality$countyid), sep = "-")
+mortality$G <- ifelse(mortality$pczupu >= median(mortality$pczupu, na.rm = TRUE), 1, 0)
+```
+
+Next, define the key input parameters (event window, reference period, variable names):
+
+```{r parameters}
+tr_period <- 1958:1961
+ref_period <- 1957
+treat <- "G"
+Y <- "mortality"
+time <- "year"
+unit <- "uniqueid"
+covar <- c("avggrain", "nograin", "urban", "dis_bj", "dis_pc",
+           "rice", "minority", "edu", "lnpop")
+```
+
+Finally, the user can use `fdid_prepare()` to reshape long-format panel data into a wide-format dataset and to construct the ingredients needed by `fdid()`. It also averages time-varying covariates and standardizes naming so downstream steps are consistent.
+
+```{r prepare}
+prepared_d <- fdid_prepare(
+  data = mortality,
+  Y_label = Y,
+  X_labels = covar,
+  G_label = treat,
+  unit_label = unit,
+  time_label = time
+)
+```
+
+```{r show_df}
+head(prepared_d)
+```
+
+::: {.callout-note appearance="simple"}
+Currently, if the data are already in wide format, e.g. from the replication package of @xu2026factorial, the user needs to convert them to long format first.
+:::
+
+### Clustering if needed
+
+Since the estimation program operates on the wide format and each row represents one unit, the robust standard errors we're using are analogous to clustering at the unit level. However, if needed, the user can choose a different and higher level to cluster by passing the cluster variable (e.g. `provid`) to `fdid_prepare()`. Then `fdid(..., vartype="robust")` will report robust standard errors clustered at the higher level.
+
+```{r prepare_cl}
+prepared_d_cl_prov <- fdid_prepare(
+  data = mortality,
+  Y_label = Y,
+  X_labels = covar,
+  G_label = treat,
+  unit_label = unit,
+  time_label = time,
+  cluster_label = "provid"
+)
+```
+
+## Logic of FDID analysis
+
+`fdid()` performs factorial difference-in-differences (FDID) estimation using cross-sectional estimation methods based on **first differences**. It converts the $(Y_{i,t}, G_i, X_i)$ into a cross-sectional form $(\Delta Y_i, G_i, X_i)$ by comparing each period (or average of a time window) to a reference period.
+
+`fdid()` reports both aggregate and dynamic estimates with different definition of $Y_{i,*}$ in $\Delta Y_i=Y_{i,*}-Y_{i,\text{ref}}$:
+
+- Aggregate estimates:
+    -   Pre-event average effect for all pre-event periods excluding the reference period: $Y_{i,*}=\bar Y_{i,\text{pre}}$ where $\bar Y_{i,\text{pre}}$ is the average of $Y_{i,t}$ across all pre-event periods except the reference period.
+    -   Event-period average effect for all event periods: $Y_{i,*}=\bar Y_{i,\text{event}}$ where $\bar Y_{i,\text{event}}$ is the average of $Y_{i,t}$ across all event periods.
+    -   Post-event average effect for all post-event periods: $Y_{i,*}=\bar Y_{i,\text{post}}$ where $\bar Y_{i,\text{post}}$ is the average of $Y_{i,t}$ across all post-event periods.
+- Dynamic Estimates:
+    -   Dynamic effects period-by-period relative to the reference: $Y_{i,*}=Y_{i,t}$ for all $t$.
+
+::: {.callout-note appearance="simple"}
+**How periods are defined**: `tr_period` defines the event window. Every period before it is “pre”, every period after it is “post”. The reference period is separately set by `ref_period` and does not have to be the last pre-event period. If it's set in event or post-event window, the corresponding window average effect will also exclude the reference period when calculating the average.
+:::
+
+::: {.callout-note appearance="simple"}
+**Carryout effect**: Because we cannot rule out carryover effects, all periods during or after the event should be considered treated or exposed. Therefore, setting a post-event period as the reference period is not recommended, even though we report separate estimates for the event and post-event periods.
+:::
+
+Compared with the TWFE model, our approach
+
+-   forces each period-by-period estimation to use a balanced two-period comparison;
+-   makes it easy to plug in selection-on-observables tools (stratification, balancing, matching, IPW, AIPW, outcome modeling, double machine learning, etc.).
+
+::: {.callout-note appearance="simple"}
+The reason why OLS is problematic here is the same as the issue with running a two-way fixed effects (TWFE) model using long-format data such as the violation of the no anticipation assumption.
+:::
+
+
+## Estimation
+
+Use `method` to choose an estimator:
+
+-   `"did"`: OLS without covariates (i.e. 2\$\times\$2 DID).
+-   `"ols1"`: OLS with covariates but no interactions.
+-   `"ols2"`: OLS with covariates and interactions.
+-   `"ebal"`: Entropy balancing.
+-   `"ipw"`: IPW via generalized random forests.
+-   `"aipw"`: AIPW via generalized random forests.
+
+Default is `ols1`.
+
+### Difference-in-Differences
+
+By setting `method = 'did'`, the estimated model is the no-covariate specification: 
+$$
+\Delta Y_i=\beta_0+\beta_G G_i+\varepsilon_i
+$$ 
+Here, $\beta_G$ is a cross-sectional analogue of the canonical $2\times 2$ DID estimand.
+
+```{r did}
+fdid_results_did <- fdid(
+  s = prepared_d,
+  tr_period = tr_period,
+  ref_period = ref_period,
+  method = "did",
+  vartype = "robust",
+)
+```
+
+`summary()` reports the point estimates, standard errors and 95% confidence intervals for aggregate estimates and dynamic estimates:
+```{r did_sum}
+summary(fdid_results_did)
+```
+
+
+### OLS without interactions
+
+By setting `method = "ols1"`, the estimated model corresponds to the $OLS_+$ specification in @xu2026factorial: 
+$$
+\Delta Y_i=\beta_0+\beta_GG_i+\beta_X'\mathbf{X}_i+\varepsilon_i
+$$
+
+```{r ols1}
+fdid_results_ols1 <- fdid(
+  s = prepared_d,
+  tr_period = tr_period,
+  ref_period = ref_period,
+  vartype = "robust",
+)
+```
+
+```{r ols1_sum}
+summary(fdid_results_ols1)
+```
+
+### OLS with interactions
+
+By setting `method = "ols2"`, the estimated model corresponds to the $OLS_*$ specification: 
+$$
+\Delta Y_i=\beta_0+\beta_GG_i+\beta_X'\mathbf{X}_i+\beta'_{GX}G_i\mathbf{X}_i+\varepsilon_i
+$$
+
+`fdid()` automatically centers covariates before estimation. With centered $X_i$, the coefficient on $G_i$ can be interpreted as consistent estimator for marginal estimand $\tau_{\text{DID-X}}$ discussed in @xu2026factorial.
+
+```{r ols2}
+fdid_results_ols2 <- fdid(
+  s = prepared_d,
+  tr_period = tr_period,
+  ref_period = ref_period,
+  method = "ols2",
+  vartype = "robust",
+)
+```
+
+```{r ols2_sum}
+summary(fdid_results_ols2)
+```
+
+### Entropy balancing
+
+By setting `method = "ebal"`, the estimation program reweights the $G=0$ group so that its covariate moments match the $G=1$ group, and then estimates the effect on $\Delta Y$. Because the weights are constructed to match the $G=1$ group, this method currently targets $G=1$ group, so the user must set `target.pop = "1"`.
+
+```{r ebal, cache=TRUE}
+fdid_results_ebal <- fdid(
+  s = prepared_d,
+  tr_period = tr_period,
+  ref_period = ref_period,
+  method = "ebal",
+  vartype = "robust",
+  target.pop = "1"
+)
+```
+
+```{r ebal_sum, cache=TRUE}
+summary(fdid_results_ebal)
+```
+
+### IPW
+
+By setting `method = "ipw"`, the estimation program performs propensity score weighting (IPW) with generalized random forests (GRF), and then reports estimated average effects.
+
+```{r ipw, cache=TRUE}
+fdid_results_ipw <- fdid(
+  s = prepared_d,
+  tr_period = tr_period,
+  ref_period = ref_period,
+  method = "ipw",
+  vartype = "robust",
+)
+```
+
+```{r ipw_sum, cache=TRUE}
+summary(fdid_results_ipw)
+```
+
+### AIPW
+
+`method = "aipw"` estimates unit-level effects using augmented inverse propensity score weighting (AIPW) with generalized random forests (GRF), and then aggregates them to produce estimated average effects.
+
+```{r aipw, cache=TRUE}
+fdid_results_aipw <- fdid(
+  s = prepared_d,
+  tr_period = tr_period,
+  ref_period = ref_period,
+  method = "aipw",
+  vartype = "robust",
+)
+```
+
+```{r aipw_sum, cache=TRUE}
+summary(fdid_results_aipw)
+```
+
+## Inference
+
+Use `vartype` to choose how standard errors are computed:
+
+-   `"robust"`: Heteroskedasticity-robust SE; becomes robust SE clustered at higher level if the user specified `cluster_label` in `fdid_prepare()`.
+
+-   `"bootstrap"`: Bootstrap standard errors.
+
+-   `"jackknife"`: Leave-one-out jackknife standard errors.
+
+Default is `"robust"`.
+
+::: {.callout-note appearance="simple"}
+**Note**: Because the program operates on the wide form, these methods are analogous to cluster robust errors, cluster bootstrap, and cluster jackknife.
+:::
+
+### Robust
+
+```{r cl_se, cache=TRUE}
+fdid_results_ols1_cl <- fdid(
+  s = prepared_d_cl_prov,
+  tr_period = tr_period,
+  ref_period = ref_period,
+  method = "ols1",
+  vartype = "robust",
+)
+```
+
+```{r cl_se_sum, cache=TRUE}
+summary(fdid_results_ols1_cl)
+```
+
+### Bootstrap
+
+The user can use `nsims` to specify the number of simulations for bootstrap variance estimation (default:`1000`) and use `cores` to set the number of cores to speed up by parallel computing (default: `2`).
+
+```{r boot, cache=TRUE}
+fdid_results_ols1_boot <- fdid(
+  s = prepared_d,
+  tr_period = tr_period,
+  ref_period = ref_period,
+  vartype = "bootstrap",
+  parallel = TRUE,
+  cores = 6,
+  nsims = 100
+)
+```
+
+```{r boot_sum, cache=TRUE}
+summary(fdid_results_ols1_boot)
+```
+
+### Jackknife
+
+The user can use `cores` to set the number of cores to speed up by parallel computing (default: `2`).
+
+```{r jackknife, cache=TRUE}
+fdid_results_ols1_jack <- fdid(
+  s = prepared_d,
+  tr_period = tr_period,
+  ref_period = ref_period,
+  vartype = "jackknife",
+  parallel = TRUE,
+  cores = 6,
+)
+```
+
+```{r jackknife_sum, cache=TRUE}
+summary(fdid_results_ols1_jack)
+```
+
+## Estimation options
+
+### `target.pop`
+
+Set `target.pop = 1` or `target.pop = 0`  to estimate the group-specific effect by targeting the covariate distribution of the $G=1$ group or $G=0$ group. Default is `all`.
+
+-   For `"did"` and `"ols1"`, the model implies the estimated effect are not reply on the covariate distribution, so results are the same for all `target.pop` values.
+-   For `"ols2"`, `target.pop = "1"` averages the interaction-adjusted effects over the $G=1$ group’s covariate distribution and `target.pop = 0` averages the interaction-adjusted effects over the $G=0$ group’s covariate distribution
+
+```{r ols2_target1, cache=TRUE}
+fdid_results_ols2_target_1 <- fdid(
+  s = prepared_d,
+  tr_period = tr_period,
+  ref_period = ref_period,
+  method = "ols2",
+  vartype = "robust",
+  target.pop = "1"
+)
+```
+
+```{r ols2_target1_sum, cache=TRUE}
+summary(fdid_results_ols2_target_1)
+```
+
+```{r ols2_target0, cache=TRUE}
+fdid_results_ols2_target_0 <- fdid(
+  s = prepared_d,
+  tr_period = tr_period,
+  ref_period = ref_period,
+  method = "ols2",
+  vartype = "robust",
+  target.pop = "0"
+)
+```
+
+```{r ols2_target0_sum, cache=TRUE}
+summary(fdid_results_ols2_target_0)
+```
+
+-   For `"ipw"`, `target.pop = "1"` computes average effects over $G=1$ units and `target.pop = "0"` computes average effects over $G=0$ units.
+
+```{r ipw_target1, cache=TRUE}
+fdid_results_ipw_target1 <- fdid(
+  s = prepared_d,
+  tr_period = tr_period,
+  ref_period = ref_period,
+  method = "ipw",
+  vartype = "robust",
+  target.pop = "1"
+)
+```
+
+```{r ipw_target_sum, cache=TRUE}
+summary(fdid_results_ipw_target1)
+```
+
+-   For `"aipw"`, `target.pop = "1"` averages estimated unit-level effects over $G=1$ units and `target.pop = "0"` averages estimated unit-level effects over $G=0$.
+
+```{r aipw_target1, cache=TRUE}
+fdid_results_aipw_target1 <- fdid(
+  s = prepared_d,
+  tr_period = tr_period,
+  ref_period = ref_period,
+  method = "aipw",
+  vartype = "robust",
+  target.pop = "1"
+)
+```
+
+```{r aipw_target_sum, cache=TRUE}
+summary(fdid_results_aipw_target1)
+```
+
+### `entire_period`
+
+Use `entire_period` to restrict estimation to a subset of periods. This only changes which years enter the analysis -- it does not change the reference period.
+
+```{r entire_period}
+fdid_results_ols1_window <- fdid(
+  s = prepared_d,
+  tr_period = tr_period,
+  ref_period = ref_period,
+  entire_period = c(1958, 1959, 1960, 1961),
+  method = "ols1",
+  vartype = "robust",
+)
+```
+
+```{r entire_period_sum}
+summary(fdid_results_ols1_window)
+```
+
+### `missing_data`
+
+`missing_data` controls how missing outcomes are handled:
+
+-   `"listwise"`: Drop a unit if any required outcome is missing (more conservative).
+-   `"available"`: Drop a unit only if any group/covariates/cluster column is missing, keep units with partially missing outcomes whenever the comparison for a given period is feasible.
+
+Default: `"listwise"`.
+
+In the example below, we create missing values to show how the two options differ.
+
+```{r d_missing}
+d_missing <- d_package
+# missing partial outcomes
+d_missing$mortality[c(1:3, 101:102, 205:207)] <- NA
+# missing covariates
+d_missing$avggrain[1:100] <- NA
+d_missing$edu[301:400] <- NA
+prepared_data_missing <- fdid_prepare(
+  data = d_missing,
+  Y_label = Y,
+  X_labels = covar,
+  G_label = treat,
+  unit_label = unit,
+  time_label = time
+)
+```
+
+```{r missing_ols}
+fdid_results_ols1_missing_l <- fdid(
+  s = prepared_data_missing,
+  tr_period = tr_period,
+  ref_period = ref_period,
+  method = "ols1",
+  vartype = "robust",
+  missing_data = "listwise"
+)
+fdid_results_ols1_missing_a <- fdid(
+  s = prepared_data_missing,
+  tr_period = tr_period,
+  ref_period = ref_period,
+  method = "ols1",
+  vartype = "robust",
+  missing_data = "available"
+)
+```
+
+```{r missing_ols_sum_l}
+summary(fdid_results_ols1_missing_l)
+```
+
+```{r missing_ols_sum_l_a}
+summary(fdid_results_ols1_missing_a)
+```
+
+## Plotting the results
+
+`plot()` provides visualizations for FDID estimation results:
+
+-   `type = "raw"`: Raw outcome means by group over time.
+-   `type = "dynamic"`: Dynamic effects relative to the reference period.
+-   `type = "overlap"`: Propensity-score overlap.
+
+`fdid_list()` lets the user visually compare multiple `fdid()` results in one plot.
+
+### Raw means by group
+
+Use `type = "raw"` to plot the outcome means and the 95% confidence intervals in each period for the $G=0$ and $G=1$ group. This plot is purely descriptive -- it does not depend on the estimation method.
+
+```{r}
+plot(fdid_results_ols1, type = "raw")
+```
+
+### Dynamic estimates
+
+Use `type = "dynamic"` to plot period-by-period estimates relative to the reference period. These estimates come from separate cross-sectional estimations by year, not a single TWFE event-study regression.
+
+```{r}
+plot(fdid_results_ols1, type = "dynamic")
+```
+
+### Diagnostic test for overlap
+
+For `method = "ipw"` and `method = "aipw"`, the user can assess the overlap assumption using `type = "overlap"`, which plots the propensity score distributions by group.
+
+```{r}
+plot(fdid_results_aipw, type = "overlap")
+```
+
+
+### Comparison of methods
+
+Use `fdid_list()` to collect multiple `fdid()` results and plot them together. The plot shows point estimates and 95% confidence intervals for each method.
+
+```{r}
+plot(fdid_list(fdid_results_did, fdid_results_ols1, fdid_results_ols2, 
+               fdid_results_ebal, fdid_results_ipw, fdid_results_aipw))
+```

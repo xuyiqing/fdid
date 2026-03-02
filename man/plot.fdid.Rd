@@ -8,6 +8,8 @@
   x,
   type = c("raw", "dynamic", "overlap"),
   connected = FALSE,
+  ci = TRUE,
+  shade_periods = x$tr_period,
   alpha_shade = 0.2,
   palette = "Set2",
   group_labels = c("Group 0", "Group 1"),
@@ -19,33 +21,38 @@
 )
 }
 \arguments{
-\item{x}{An `fdid` object.}
+\item{x}{An \code{fdid} object.}
 
-\item{type}{One of `"raw"`, `"dynamic"`, or `"overlap"`.}
+\item{type}{One of \code{"raw"}, \code{"dynamic"}, or \code{"overlap"}.}
 
-\item{connected}{Logical; if `TRUE`, connects points with lines in
-the "raw" and "dynamic" plots.  Default is `FALSE`.}
+\item{connected}{Logical; if \code{TRUE}, connects points with lines in
+the "raw" and "dynamic" plots.  Default is \code{FALSE}.}
+
+\item{ci}{Logical; if \code{TRUE}, draw 95\% CIs when available. Default is \code{TRUE}.}
+
+\item{shade_periods}{Shaded intervals on the time axis. Default uses \code{x$tr_period}, i.e. event periods.
+Set to \code{NULL} to remove shaded area.}
 
 \item{alpha_shade}{Transparency for shading the treatment period.}
 
-\item{palette}{A palette name from **RColorBrewer**.  Default `"Set2"`.}
+\item{palette}{A palette name from \strong{RColorBrewer}.  Default \code{"Set2"}.}
 
 \item{group_labels}{Labels for the two groups.}
 
 \item{xlab, ylab, main}{Axis labels and main title.}
 
-\item{ylim}{Y-axis limits.  Default `NULL` (computed automatically).}
+\item{ylim}{Y-axis limits.  Default \code{NULL} (computed automatically).}
 
 \item{...}{Additional graphics parameters.}
 }
 \value{
-Produces a plot; invisibly returns `NULL`.
+Produces a plot; invisibly returns \code{NULL}.
 }
 \description{
 Provides visualisations for FDID results, including raw means, dynamic
 effects, and propensity-score overlap.  The comparison plot of multiple
-methods has been removed; use `plot.fdid_list()` for that.
+methods has been removed; use \code{plot.fdid_list()} for that.
 }
 \author{
-Rivka Lipkovitz
+Rivka Lipkovitz, Enhan Liu
 }

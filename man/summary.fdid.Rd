@@ -7,16 +7,16 @@
 \method{summary}{fdid}(object, ...)
 }
 \arguments{
-\item{object}{An object of class `fdid`.}
+\item{object}{An object of class \code{fdid}.}
 
 \item{...}{Additional arguments (not used).}
 }
 \value{
-Prints a summary of the `fdid` object.
+Prints a summary of the \code{fdid} object.
 }
 \description{
 Summary Method for FDID Objects
 }
 \author{
-Rivka Lipkovitz
+Rivka Lipkovitz, Enhan Liu
 }

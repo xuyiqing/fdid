@@ -4,27 +4,40 @@
 \alias{plot.fdid_list}
 \title{Plot Multiple FDID Estimates}
 \usage{
-\method{plot}{fdid_list}(x, palette = "Set2", xlab = NULL, main = NULL, ylim = NULL, ...)
+\method{plot}{fdid_list}(
+  x,
+  palette = "Set2",
+  xlab = NULL,
+  ylab = NULL,
+  main = NULL,
+  ylim = NULL,
+  vertical = TRUE,
+  ...
+)
 }
 \arguments{
 \item{x}{An object of class `"fdid_list"`.}
 
 \item{palette}{A palette name from **RColorBrewer**. Defaults to `"Set2"`.}
 
-\item{xlab, }{main Axis label and title.  If `NULL`, sensible defaults are
-used.}
+\item{xlab, }{ylab, main Axis labels and title. If `NULL`, sensible defaults are used.}
 
-\item{ylim}{Optional numeric vector of length two giving the y-axis limits.}
+\item{ylim}{Optional numeric vector of length two giving the *estimate-axis* limits.
+(Backward compatible: for horizontal plots this is the x-limit; for vertical plots this is the y-limit.)}
 
-\item{...}{Additional graphics parameters passed to `plot()`.}
+\item{vertical}{Logical; default is \code{TRUE}.}
+
+\item{...}{Additional graphics parameters passed to \code{plot()}.}
+
+\item{show_vartype}{Logical; include vartype in labels. Default is \code{TRUE}.}
 }
 \value{
 Invisibly returns `x`; called for its side-effect of drawing a plot.
 }
 \description{
-Creates a side-by-side comparison plot of point estimates and confidence
-intervals for every element of an `fdid_list`.
+Creates a comparison plot of point estimates and confidence intervals for
+every element of an `fdid_list`.
 }
 \author{
-Rivka Lipkovitz
+Rivka Lipkovitz, Enhan Liu
 }

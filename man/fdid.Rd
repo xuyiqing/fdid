@@ -15,48 +15,49 @@ fdid(
   nsims = 1000,
   parallel = FALSE,
   cores = 2,
-  ATT = FALSE
+  target.pop = c("all", "1", "0")
 )
 }
 \arguments{
-\item{s}{A data frame prepared using `fdid_prepare`.}
+\item{s}{A data frame prepared using \code{fdid_prepare}.}
 
 \item{tr_period}{A numeric vector specifying the treatment periods.}
 
 \item{ref_period}{A numeric scalar specifying the reference period.}
 
 \item{entire_period}{A numeric vector specifying the total range of time periods.
-If `NULL`, estimation is performed on all available time periods.
-Example: `c(1958, 1959, 1960, 1961)`.}
+If \code{NULL}, estimation is performed on all available time periods.
+Example: \code{c(1958, 1959, 1960, 1961)}.}
 
 \item{method}{A string specifying the estimation method.
-Options: `"ols1"`, `"ols2"`, `"did"`, `"ebal"`, `"aipw"`.
-Default is `"ols1"`.}
+Options: \code{"ols1"}, \code{"ols2"}, \code{"did"}, \code{"ebal"}, \code{"ipw"}, \code{"aipw"}.
+Default is \code{"ols1"}.}
 
 \item{vartype}{A string specifying the variance estimation type.
-Options: `"robust"`, `"bootstrap"`, `"jackknife"`.
-Default is `"robust"`.}
+Options: \code{"robust"}, \code{"bootstrap"}, \code{"jackknife"}.
+Default is \code{"robust"}.}
 
 \item{missing_data}{How to handle missing data. Two options:
-- `"listwise"`: Drop any row missing **any** relevant column (including
-  outcomes in the periods used).
-- `"available"`: Drop rows only if they are missing in group/covariates/cluster
-  columns, but allow partial usage of outcomes.
-Default is `"listwise"`.}
+\itemize{
+  \item \code{"listwise"}: Drop any row missing \strong{any} relevant column (including
+    outcomes in the periods used).
+  \item \code{"available"}: Drop rows only if they are missing in group/covariates/cluster
+    columns, but allow partial usage of outcomes.
+}
+Default is \code{"listwise"}.}
 
 \item{nsims}{Number of simulations for bootstrap variance estimation.
-Default is `1000`.}
+Default is \code{1000}.}
 
 \item{parallel}{Logical; whether to perform parallel computations.
-Default is `FALSE`.}
+Default is \code{FALSE}.}
 
 \item{cores}{Number of cores for parallel computations.
-Default is `2`.}
+Default is \code{2}.}
 
-\item{ATT}{Logical; if `TRUE`, attempts to estimate the ATT by targeting
-the covariate distribution of the treated group (`G=1`). If `FALSE`,
-estimates the ATE. Not all methods can handle both; see Details.
-Default is `FALSE`.}
+\item{target.pop}{Character; the target population for averaging: \code{"all"}, \code{"1"}, or \code{"0"}. 
+\code{"all"} corresponds to the full sample. \code{"1"} targets the \code{G=1} population. 
+\code{"0"} targets the \code{G=0} population. Default is \code{"all"}.}
 }
 \value{
 A list with the following components:
@@ -64,8 +65,8 @@ A list with the following components:
              \code{$pre}, \code{$event}, and \code{$post} containing
              aggregated pre-treatment, overall event, and post-treatment
              FDID estimates, respectively.}
-  \item{dynamic}{Dynamic FDID estimates for each time in `entire_period`.}
-  \item{raw_means}{Raw mean outcomes by group for each time in `entire_period`.}
+  \item{dynamic}{Dynamic FDID estimates for each time in \code{entire_period}.}
+  \item{raw_means}{Raw mean outcomes by group for each time in \code{entire_period}.}
   \item{tr_period}{Treatment periods used.}
   \item{ref_period}{Reference period used.}
   \item{entire_period}{All time periods for dynamic estimation.}
@@ -73,13 +74,13 @@ A list with the following components:
   \item{vartype}{Variance type used.}
   \item{times}{All numeric time columns found.}
   \item{G}{Group indicator (0/1).}
-  \item{ps}{Propensity scores (if `aipw` method used).}
+  \item{ps}{Propensity scores (if \code{ipw} or \code{aipw} method used).}
   \item{call}{The matched call.}
-  \item{ATT}{Logical indicating whether ATT was requested.}
+  \item{target.pop}{Character indicating the target population used.}
 }
 \description{
 Performs factorial difference-in-differences (FDID) estimation using various methods and variance estimation techniques.
 }
 \author{
-Rivka Lipkovitz
+Rivka Lipkovitz, Enhan Liu
 }

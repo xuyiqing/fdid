@@ -6,6 +6,19 @@ utils::globalVariables("tr_period")
 #' @param ... Additional arguments (not used).
 #'
 #' @return Prints a summary of the \code{fdid} object.
+#' @examples
+#' \donttest{
+#' data(fdid)
+#' mortality$uniqueid <- paste(mortality$provid, mortality$countyid, sep = "-")
+#' mortality$G <- ifelse(mortality$pczupu >= median(mortality$pczupu, na.rm = TRUE), 1, 0)
+#' s <- fdid_prepare(
+#'   data = mortality, Y_label = "mortality",
+#'   X_labels = c("avggrain", "lnpop"),
+#'   G_label = "G", unit_label = "uniqueid", time_label = "year"
+#' )
+#' result <- fdid(s, tr_period = 1958:1961, ref_period = 1957)
+#' summary(result)
+#' }
 #' @author Rivka Lipkovitz, Enhan Liu
 #' @export
 summary.fdid <- function(object, ...) {
@@ -45,7 +58,7 @@ summary.fdid <- function(object, ...) {
   cat("  Reference Period:  ", paste(object$ref_period, collapse = ", "), "\n")
   if (length(pre_times) > 0)
     cat("  Pre-Event Period:  ", paste(pre_times, collapse = ", "), "\n")
-  if (length(tr_period) > 0)
+  if (length(object$tr_period) > 0)
     cat("  Event Period:      ", paste(object$tr_period, collapse = ", "), "\n")
   if (length(post_times) > 0)
     cat("  Post-Event Period: ", paste(post_times, collapse = ", "), "\n")

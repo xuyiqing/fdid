@@ -1,0 +1,89 @@
+# Get Started {#sec-start}
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE, message = FALSE, warning = FALSE)
+```
+
+This chapter provides installation instructions and introduces the `mortality` dataset used in the tutorial.
+
+## Installation
+
+To install `fdid` from CRAN, run the code chunk below:
+
+```{r install_CRAN, eval = FALSE}
+install.packages("fdid")
+```
+
+
+The development version of the `fdid` package can be installed from [Github](https://github.com/xuyiqing/fdid):
+
+```{r installation, eval = FALSE}
+# If not already installed
+install.packages('devtools', repos = 'http://cran.us.r-project.org') 
+
+# Directly install
+devtools::install_github('xuyiqing/fdid')
+```
+
+If you downloaded the source folder and want to install locally, first build a `.tar.gz` file and then install it:
+
+```{r installation_local, eval = FALSE}
+# It can be implemented by "Terminal" of R Studio:
+# (Typing the command after ':' in each step at the 'Terminal' page 
+# and replace "path/to/" with the actual path)
+# 1. Set directory: cd path/to
+# 2. Build package: R CMD build fdid
+# 3. Install package: R CMD INSTALL fdid_0.1.0.tar.gz
+```
+
+`fdid` depends on the following packages, which should be installed automatically when `fdid` is being installed. You can also install them manually.
+```{r dependencies, eval=FALSE}
+install_all <- function(packages) {
+  installed_pkgs <- installed.packages()[, "Package"]
+  for (pkg in packages) {
+    if (!pkg %in% installed_pkgs) {
+      install.packages(pkg)
+    }
+  }
+}
+packages <- c("estimatr", "dplyr", "tidyr", "rlang", "tidyselect", "RColorBrewer", 
+              "foreach", "doParallel", "ebal", "grf", "car", 
+              "sandwich")
+install_all(packages)
+```
+
+
+## Dataset
+
+As in the empirical application of @xu2026factorial, we use the county-year panel from @cao2022clans\[<a href="https://doi.org/10.1016/j.jdeveco.2022.102865" target="_blank">Paper</a>\] to illustrate the workflow.
+
+@cao2022clans examines the role of social capital in disaster relief during China’s Great Famine and finds that the rise in the mortality rate during the famine years is significantly less in counties with a higher clan density. In their research design, the event is China’s Great Famine (1958–1961), and the baseline factor $G$ is social capital, measured by the density of genealogy books.
+
+`fdid` ships this long-format panel dataset `mortality`, which works directly with `fdid_prepare()` we'll explain in [Chapter @sec-main]. To load it, run the code chunk below:
+
+```{r read_data}
+library(fdid)
+data(fdid)
+ls()
+```
+
+The `mortality` dataset includes 16 variables. The variables are described below.
+
+- Unit and period identifiers: `provid` identifies the province and `countyid` is the id of the county in this province; `year` indicates the period of the variables.
+- Baseline factor in different measurement methods: `pczupu` is the number of genealogy books in a county; `anyzupu` is a binary variable which equals 1 if there's any genealogy book in a county; `zupu` is a discrete variable to differentiate counties with some genealogies (`zupu = 1`) and counties with many genealogies (`zupu = 2`).
+- Outcome: `mortality` is a county's mortality in a year.
+- Pre-event covariates:
+    - `avggrain`: per capita grain production
+    - `nograin`: ratio of non-farming land
+    - `urban`: share of urban population
+    - `dis_bj`: distance from Beijing (km)
+    - `dis_pc`: distance from provincial capital (km)
+    - `rice`: suitable for rice cultivation (indicator)
+    - `minority`: share of ethnic minorities
+    - `edu`: average years of education
+    - `lnpop`: log county population
+
+```{r show_long_df}
+head(mortality)
+```
+

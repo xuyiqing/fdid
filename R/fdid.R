@@ -50,6 +50,19 @@
 #'   \item{call}{The matched call.}
 #'   \item{target.pop}{Character indicating the target population used.}
 #'
+#' @examples
+#' \donttest{
+#' data(fdid)
+#' mortality$uniqueid <- paste(mortality$provid, mortality$countyid, sep = "-")
+#' mortality$G <- ifelse(mortality$pczupu >= median(mortality$pczupu, na.rm = TRUE), 1, 0)
+#' s <- fdid_prepare(
+#'   data = mortality, Y_label = "mortality",
+#'   X_labels = c("avggrain", "lnpop"),
+#'   G_label = "G", unit_label = "uniqueid", time_label = "year"
+#' )
+#' result <- fdid(s, tr_period = 1958:1961, ref_period = 1957)
+#' summary(result)
+#' }
 #' @import dplyr
 #' @import estimatr
 #' @importFrom grf causal_forest

@@ -3,5 +3,8 @@
 .RData
 .Ruserdata
 .DS_Store
-.DS_Store
-.DS_Store
+
+# Quarto / knitr build artifacts
+tutorial/_book/
+tutorial/*_cache/
+tutorial/*_files/

@@ -216,8 +216,8 @@ plot(fdid_results_ols1, type = "dynamic", connected = TRUE)
 plot(fdid_results_ols1, type = "dynamic", connected = TRUE,
      shade_periods = c(1954, 1957),
      alpha_shade = 0.8, ylim = c(-10, 4),
-     ylab = "Dynamic Moderating Effect", xlab = "Year", 
-     main = "Dynamic Effect of High Social Capital"
+     ylab = "Estimates", xlab = "Year", 
+     main = "Effect Modification of High Social Capital"
      )
 ```
 
@@ -226,8 +226,8 @@ plot(fdid_results_ols1, type = "dynamic", connected = TRUE,
 ```{r}
 plot(fdid_results_ols1, type = "dynamic",
      alpha_shade = 0.8, ylim = c(-10, 4), xlim = c(1954, 1961),
-     ylab = "Dynamic Moderating Effect", xlab = "Year", 
-     main = "Dynamic Effect of High Social Capital w/o Post-Event Periods"
+     ylab = "Estimates", xlab = "Year", 
+     main = "Hiding Post-Event Periods"
      )
 ```
 

@@ -27,9 +27,9 @@ The user tutorial is structured into the following chapters:
 
 ## Contributors
 
--   [Yiqing Xu](https://yiqingxu.org/){target="_blank"}\
--   [Rivka Lipkovitz](https://rivka.me/){target="_blank"} (Undergraduate at MIT)\
--   [Enhan Liu](https://enhan-liu.github.io/){target="_blank"} (Master student at UChicago Harris)
+-   [Rivka Lipkovitz](https://rivka.me/){target="_blank"} (MIT)\
+-   [Enhan Liu](https://enhan-liu.github.io/){target="_blank"} (UChicago Harris)
+-   [Yiqing Xu](https://yiqingxu.org/){target="_blank"} (Stanford)\
 
 
 ## Report bugs

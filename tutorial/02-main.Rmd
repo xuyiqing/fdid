@@ -86,7 +86,7 @@ prepared_d_cl_prov <- fdid_prepare(
     -   Event-period average effect for all event periods: $Y_{i,*}=\bar Y_{i,\text{event}}$ where $\bar Y_{i,\text{event}}$ is the average of $Y_{i,t}$ across all event periods.
     -   Post-event average effect for all post-event periods: $Y_{i,*}=\bar Y_{i,\text{post}}$ where $\bar Y_{i,\text{post}}$ is the average of $Y_{i,t}$ across all post-event periods.
 - Dynamic Estimates:
-    -   Dynamic effects period-by-period relative to the reference: $Y_{i,*}=Y_{i,t}$ for all $t$.
+    -   Dynamic period-by-period estimates relative to the reference: $Y_{i,*}=Y_{i,t}$ for all $t$.
 
 ::: {.callout-note appearance="simple"}
 **How periods are defined**: `tr_period` defines the event window. Every period before it is “pre”, every period after it is “post”. The reference period is separately set by `ref_period` and does not have to be the last pre-event period. If it's set in event or post-event window, the corresponding window average effect will also exclude the reference period when calculating the average.
@@ -464,7 +464,7 @@ summary(fdid_results_ols1_missing_a)
 `plot()` provides visualizations for FDID estimation results:
 
 -   `type = "raw"`: Raw outcome means by group over time.
--   `type = "dynamic"`: Dynamic effects relative to the reference period.
+-   `type = "dynamic"`: Dynamic estimates relative to the reference period.
 -   `type = "overlap"`: Propensity-score overlap.
 
 `fdid_list()` lets the user visually compare multiple `fdid()` results in one plot.

@@ -1,0 +1,117 @@
+# Sensitivity Analysis {#sec-sensitivity}
+
+```{r setup-sens, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE, message = FALSE, warning = FALSE)
+```
+
+After estimating treatment effects with `fdid()`, a natural next step is to
+assess how robust the results are to potential unmeasured confounders. We
+recommend using the [`sensemakr`](https://carloscinelli.com/sensemakr/) package
+(@cinelli2020making) for this purpose.
+
+`sensemakr` quantifies sensitivity in terms of partial $R^2$: how strongly
+would an omitted variable need to be associated with both the treatment and the
+outcome to explain away the estimated effect. A full methodological discussion
+is in Xu, Zhao, and Ding (2026, Appendix A3).
+
+## Setup
+
+```{r library-sens}
+library(fdid)
+library(sensemakr)
+data(fdid)
+```
+
+Recreate the prepared data and define the change-score outcome (mean of famine
+years minus the pre-famine baseline):
+
+```{r data-sens}
+mortality$uniqueid <- paste(as.character(mortality$provid),
+                            as.character(mortality$countyid), sep = "-")
+mortality$G <- ifelse(mortality$pczupu >= median(mortality$pczupu, na.rm = TRUE), 1, 0)
+
+covar <- c("avggrain", "nograin", "urban", "dis_bj", "dis_pc",
+           "rice", "minority", "edu", "lnpop")
+
+s <- fdid_prepare(
+  data       = mortality,
+  Y_label    = "mortality",
+  X_labels   = covar,
+  G_label    = "G",
+  unit_label = "uniqueid",
+  time_label = "year"
+)
+
+# Change-score outcome: mean(famine years) - reference year
+# Covariates in s are stored as x1–x9 (matching order of X_labels above)
+s$chg_mortality <- rowMeans(s[, paste0("Y_", 1958:1961)]) - s$Y_1957
+xvars <- paste0("x", seq_along(covar))
+```
+
+## Binary treatment ($G$ = high vs. low social capital)
+
+Fit the OLS change-score regression and pass it to `sensemakr`:
+
+```{r sens-binary}
+fml_bin <- as.formula(paste("chg_mortality ~ G +", paste(xvars, collapse = " + ")))
+mod_bin  <- lm(fml_bin, data = s)
+
+sens_bin <- sensemakr(
+  model                = mod_bin,
+  treatment            = "G",
+  benchmark_covariates = xvars,
+  kd                   = 1,
+  sensitivity.of       = "t-value"
+)
+summary(sens_bin)
+```
+
+```{r plot-sens-binary, fig.width=6, fig.height=6}
+plot(sens_bin, show.unadjusted = FALSE)
+```
+
+The contour plot shows the combinations of confounder-treatment and
+confounder-outcome partial $R^2$ that would reduce the t-value to zero.
+Dots mark benchmark values corresponding to each observed covariate.
+
+## Continuous treatment ($\ln(\text{pczupu} + 1)$)
+
+Repeat with `lnpczupu` as a continuous treatment:
+
+```{r sens-continuous}
+# lnpczupu = log(pczupu + 1) is included in the bundled mortality dataset
+s_cont <- fdid_prepare(
+  data       = transform(mortality, G = lnpczupu),
+  Y_label    = "mortality",
+  X_labels   = covar,
+  G_label    = "G",
+  unit_label = "uniqueid",
+  time_label = "year"
+)
+s_cont$chg_mortality <- rowMeans(s_cont[, paste0("Y_", 1958:1961)]) - s_cont$Y_1957
+
+fml_cont <- as.formula(paste("chg_mortality ~ G +", paste(xvars, collapse = " + ")))
+mod_cont  <- lm(fml_cont, data = s_cont)
+
+sens_cont <- sensemakr(
+  model                = mod_cont,
+  treatment            = "G",
+  benchmark_covariates = xvars,
+  kd                   = 1,
+  sensitivity.of       = "t-value"
+)
+```
+
+```{r plot-sens-continuous, fig.width=6, fig.height=6}
+plot(sens_cont, show.unadjusted = FALSE)
+```
+
+## References
+
+Cinelli, C. and Hazlett, C. (2020). "Making Sense of Sensitivity: Extending
+Omitted Variable Bias." *Journal of the Royal Statistical Society: Series B*,
+82(1), 39–67.
+
+Xu, Y., Zhao, S., and Ding, P. (2026). "Factorial Difference-in-Differences."
+*Journal of the American Statistical Association*.
+<https://doi.org/10.1080/01621459.2026.2628343>

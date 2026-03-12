@@ -11,6 +11,7 @@ book:
     - 01-start.Rmd
     - 02-main.Rmd
     - 03-visualization.Rmd
+    - 04-sensitivity.Rmd
     - references.qmd
 
 delete_merged_file: true

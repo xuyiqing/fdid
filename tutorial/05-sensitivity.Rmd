@@ -1,0 +1,132 @@
+# Sensitivity Analysis {#sec-sensitivity}
+
+```{r setup-sens, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE, message = FALSE, warning = FALSE)
+```
+
+After estimating treatment effects with `fdid()`, a natural next step is to
+assess how robust the results are to potential unmeasured confounders. We
+recommend using the [`sensemakr`](https://carloscinelli.com/sensemakr/) package
+(@cinelli2020making) for this purpose.
+
+`sensemakr` quantifies sensitivity in terms of partial $R^2$: how strongly
+would an omitted variable need to be associated with both the treatment $G$ and
+the change-score outcome $\Delta Y$ to explain away the estimated effect.
+A full methodological discussion is in @xu2026factorial (Appendix A3).
+
+## Setup
+
+```{r library-sens}
+library(fdid)
+library(sensemakr)
+data(fdid)
+```
+
+We use the prepared wide-format data from [Chapter @sec-binary] and construct
+the change-score outcome: the average mortality during the famine years minus
+the pre-famine baseline.
+
+```{r data-sens}
+mortality$uniqueid <- paste(as.character(mortality$provid),
+                            as.character(mortality$countyid), sep = "-")
+mortality$G        <- ifelse(mortality$pczupu >= median(mortality$pczupu, na.rm = TRUE), 1, 0)
+
+covar <- c("avggrain", "nograin", "urban", "dis_bj", "dis_pc",
+           "rice", "minority", "edu", "lnpop")
+
+s <- fdid_prepare(
+  data       = mortality,
+  Y_label    = "mortality",
+  X_labels   = covar,
+  G_label    = "G",
+  unit_label = "uniqueid",
+  time_label = "year"
+)
+
+# Change-score outcome: mean(famine years) - reference year
+# Covariates in s are stored as x1–x9 (matching order of X_labels above)
+s$chg_mortality <- rowMeans(s[, paste0("Y_", 1958:1961)]) - s$Y_1957
+xvars <- paste0("x", seq_along(covar))
+```
+
+## Sensitivity analysis
+
+Fit the OLS change-score regression and pass it to `sensemakr`:
+
+```{r sens-binary}
+fml <- as.formula(paste("chg_mortality ~ G +", paste(xvars, collapse = " + ")))
+mod <- lm(fml, data = s)
+
+sens <- sensemakr(
+  model                = mod,
+  treatment            = "G",
+  benchmark_covariates = xvars,
+  kd                   = 1,
+  sensitivity.of       = "t-value"
+)
+summary(sens)
+```
+
+```{r plot-sens, fig.width=6, fig.height=6}
+plot(sens, show.unadjusted = FALSE)
+```
+
+### Interpreting the plot
+
+The contour plot visualises how a hypothetical unmeasured confounder would need
+to relate to both the treatment and the outcome to explain away the result:
+
+- **Horizontal axis**: partial $R^2$ of the confounder with $G$ — how much
+  variation in the treatment the confounder explains, beyond the observed covariates.
+- **Vertical axis**: partial $R^2$ of the confounder with $\Delta Y$ — how much
+  variation in the change-score outcome it explains.
+- **Contour lines**: combinations that yield a given t-value. The outermost
+  contour (labelled `t = 0`) marks the boundary where the effect is no longer
+  statistically distinguishable from zero.
+- **Dots (benchmarks)**: each dot represents one observed covariate scaled to
+  have the same association strength as that covariate (`kd = 1`). If all
+  benchmark dots fall well inside the t = 0 contour, the result is robust —
+  an unobserved confounder would need to be substantially stronger than any
+  observed covariate to nullify the finding.
+
+In this application, the benchmarks cluster far from the t = 0 boundary,
+suggesting the moderation effect of high social capital on famine mortality is
+robust to moderate unmeasured confounding.
+
+## Continuous G
+
+Repeat the analysis with `lnpczupu` as a continuous treatment:
+
+```{r sens-continuous}
+mortality$lnpczupu <- log(mortality$pczupu + 1)
+
+s_cont <- fdid_prepare(
+  data       = transform(mortality, G = lnpczupu),
+  Y_label    = "mortality",
+  X_labels   = covar,
+  G_label    = "G",
+  unit_label = "uniqueid",
+  time_label = "year"
+)
+s_cont$chg_mortality <- rowMeans(s_cont[, paste0("Y_", 1958:1961)]) - s_cont$Y_1957
+
+fml_cont <- as.formula(paste("chg_mortality ~ G +", paste(xvars, collapse = " + ")))
+mod_cont  <- lm(fml_cont, data = s_cont)
+
+sens_cont <- sensemakr(
+  model                = mod_cont,
+  treatment            = "G",
+  benchmark_covariates = xvars,
+  kd                   = 1,
+  sensitivity.of       = "t-value"
+)
+summary(sens_cont)
+```
+
+```{r plot-sens-cont, fig.width=6, fig.height=6}
+plot(sens_cont, show.unadjusted = FALSE)
+```
+
+The interpretation mirrors the binary case: benchmark dots well inside the
+t = 0 contour indicate that the moderation effect of social capital — measured
+continuously — is robust to moderate unmeasured confounding.

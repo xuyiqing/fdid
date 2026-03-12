@@ -15,14 +15,14 @@ install.packages("fdid")
 ```
 
 
-The development version of the `fdid` package can be installed from [Github](https://github.com/xuyiqing/fdid):
+The `main` branch on GitHub tracks the latest stable release. The `dev` branch contains the most up-to-date features but may be more prone to errors.
 
 ```{r installation, eval = FALSE}
-# If not already installed
-install.packages('devtools', repos = 'http://cran.us.r-project.org') 
+# Install stable version from GitHub (same as CRAN)
+devtools::install_github("xuyiqing/fdid")
 
-# Directly install
-devtools::install_github('xuyiqing/fdid')
+# Install the latest development version (may be unstable)
+devtools::install_github("xuyiqing/fdid@dev")
 ```
 
 If you downloaded the source folder and want to install locally, first build a `.tar.gz` file and then install it:
@@ -46,8 +46,8 @@ install_all <- function(packages) {
     }
   }
 }
-packages <- c("estimatr", "dplyr", "tidyr", "rlang", "tidyselect", "RColorBrewer", 
-              "foreach", "doParallel", "ebal", "grf", "car", 
+packages <- c("estimatr", "dplyr", "tidyr", "rlang", "tidyselect", "RColorBrewer",
+              "foreach", "doFuture", "future", "ebal", "grf", "car",
               "sandwich")
 install_all(packages)
 ```
@@ -59,7 +59,7 @@ As in the empirical application of @xu2026factorial, we use the county-year pane
 
 @cao2022clans examines the role of social capital in disaster relief during China’s Great Famine and finds that the rise in the mortality rate during the famine years is significantly less in counties with a higher clan density. In their research design, the event is China’s Great Famine (1958–1961), and the baseline factor $G$ is social capital, measured by the density of genealogy books.
 
-`fdid` ships this long-format panel dataset `mortality`, which works directly with `fdid_prepare()` we'll explain in [Chapter @sec-main]. To load it, run the code chunk below:
+`fdid` ships this long-format panel dataset `mortality`, which works directly with `fdid_prepare()` we'll explain in [Chapter @sec-binary]. To load it, run the code chunk below:
 
 ```{r read_data}
 library(fdid)
@@ -70,7 +70,7 @@ ls()
 The `mortality` dataset includes 16 variables. The variables are described below.
 
 - Unit and period identifiers: `provid` identifies the province and `countyid` is the id of the county in this province; `year` indicates the period of the variables.
-- Baseline factor in different measurement methods: `pczupu` is the number of genealogy books in a county; `anyzupu` is a binary variable which equals 1 if there's any genealogy book in a county; `zupu` is a discrete variable to differentiate counties with some genealogies (`zupu = 1`) and counties with many genealogies (`zupu = 2`).
+- Baseline factor in different measurement methods: `pczupu` is the number of genealogy books in a county (per capita); `lnpczupu` is its log-transformed version (`log(pczupu + 1)`), used as a continuous treatment; `anyzupu` is a binary variable which equals 1 if there's any genealogy book in a county; `zupu` is a discrete variable to differentiate counties with some genealogies (`zupu = 1`) and counties with many genealogies (`zupu = 2`).
 - Outcome: `mortality` is a county's mortality in a year.
 - Pre-event covariates:
     - `avggrain`: per capita grain production

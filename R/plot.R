@@ -34,6 +34,7 @@
 #' plot(result, type = "dynamic")
 #' }
 #' @author Rivka Lipkovitz, Enhan Liu
+#' @importFrom rlang %||%
 #' @export
 plot.fdid <- function(x,
                       type = c("raw", "dynamic", "overlap"),

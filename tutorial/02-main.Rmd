@@ -1,4 +1,4 @@
-# FDID Main Program {#sec-main}
+# Binary G {#sec-binary}
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, cache = TRUE, message = FALSE, warning = FALSE)
@@ -170,7 +170,7 @@ $$
 \Delta Y_i=\beta_0+\beta_GG_i+\beta_X'\mathbf{X}_i+\beta'_{GX}G_i\mathbf{X}_i+\varepsilon_i
 $$
 
-`fdid()` automatically centers covariates before estimation. With centered $X_i$, the coefficient on $G_i$ can be interpreted as consistent estimator for marginal estimand $\tau_{\text{DID-X}}$ discussed in @xu2026factorial.
+`fdid()` automatically centers covariates before estimation. With centered $X_i$, the coefficient on $G_i$ can be interpreted as consistent estimator for marginal estimand $\tau_{\text{DID-X}}$ discussed in @xu2026factorial. The standard error for `ols2` with `target.pop = "all"` (the default) includes the Lin (2013) super-population correction $\hat{\gamma}'\hat{\Sigma}_X\hat{\gamma}/n$, where $\hat{\gamma}$ are the estimated interaction coefficients and $\hat{\Sigma}_X$ is the sample covariance of the covariates.
 
 ```{r ols2}
 fdid_results_ols2 <- fdid(
@@ -247,7 +247,7 @@ Use `vartype` to choose how standard errors are computed:
 
 -   `"robust"`: Heteroskedasticity-robust SE; becomes robust SE clustered at higher level if the user specified `cluster_label` in `fdid_prepare()`.
 
--   `"bootstrap"`: Bootstrap standard errors.
+-   `"bootstrap"`: Bias-corrected bootstrap confidence intervals. CIs are computed as $(\hat{\tau} - (q_{97.5} - \bar{\tau}^*),\; \hat{\tau} + (\bar{\tau}^* - q_{2.5}))$, where $\bar{\tau}^*$ is the bootstrap mean and $q_{2.5}, q_{97.5}$ are bootstrap quantiles. Parallel bootstrap uses `doFuture` with `L'Ecuyer-CMRG` streams for reproducible results.
 
 -   `"jackknife"`: Leave-one-out jackknife standard errors.
 

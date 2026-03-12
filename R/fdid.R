@@ -68,6 +68,9 @@
 #' @importFrom grf causal_forest
 #' @importFrom rlang sym
 #' @importFrom tidyselect all_of
+#' @importFrom doFuture registerDoFuture `%dofuture%`
+#' @importFrom future plan multisession sequential
+#' @importFrom stats cov
 #' @author Rivka Lipkovitz, Enhan Liu
 #' @export
 fdid <- function(s,
@@ -205,6 +208,23 @@ fdid <- function(s,
   tmp <- rowMeans(s[, Y_tr_cols_eff, drop = FALSE], na.rm = TRUE)
   s$tempY <- tmp - s[[Y_ref_col]]
 
+  # ----- Parallel backend selector -----
+  # mclapply (fork) is fast on Unix/Mac; multisession is too slow for small
+  # tasks (~4ms/iter) due to IPC overhead. On Windows, fall back to sequential.
+  use_mclapply <- parallel && (.Platform$OS.type == "unix")
+  use_future   <- parallel && !use_mclapply &&
+                    vartype %in% c("bootstrap", "jackknife")
+  if (use_future) {
+    if (!requireNamespace("foreach",  quietly = TRUE) ||
+        !requireNamespace("doFuture", quietly = TRUE) ||
+        !requireNamespace("future",   quietly = TRUE)) {
+      stop("Parallel requires 'foreach', 'doFuture', and 'future' packages.")
+    }
+    future::plan(future::multisession, workers = cores)
+    doFuture::registerDoFuture()
+    on.exit(future::plan(future::sequential), add = TRUE)
+  }
+
   # ----- Estimation Subroutines -----
 
   est_did <- function(d, covar) {
@@ -289,6 +309,16 @@ fdid <- function(s,
       g[int_names] <- xbar
 
       var_super <- as.numeric(t(g) %*% V %*% g)
+
+      # Super-population correction (Lin 2013): add γ'Σ_X γ / n
+      # This term is non-zero even when target.pop = "all" (xbar = 0)
+      # and ensures SEs match the paper's reported results.
+      if (target.pop == "all") {
+        gamma      <- coefs[int_names]
+        sp_correction <- as.numeric(t(gamma) %*% cov(X) %*% gamma) / n
+        var_super  <- var_super + sp_correction
+      }
+
       se_super  <- sqrt(var_super)
 
       out <- c(
@@ -437,26 +467,25 @@ fdid <- function(s,
       run_method(db, method, covar)["Estimate"]
     }
     if (!parallel) {
-      vals <- replicate(B, one_boot(1), simplify=TRUE)
+      vals <- replicate(B, one_boot(1), simplify = TRUE)
+    } else if (use_mclapply) {
+      vals <- unlist(parallel::mclapply(1:B, one_boot, mc.cores = cores,
+                                        mc.set.seed = TRUE))
     } else {
-      if (!requireNamespace("foreach", quietly=TRUE) ||
-          !requireNamespace("doParallel", quietly=TRUE)) {
-        stop("Parallel requires 'foreach' and 'doParallel' packages.")
-      }
-      cl <- parallel::makeCluster(cores)
-      doParallel::registerDoParallel(cl)
       vals <- foreach::foreach(
         i = 1:B,
         .combine = c,
-        .export = c("run_method","est_did", "est_ols1", "est_ols2", "est_ebal", "est_aipw", "est_ipw")
-      ) %dopar% {
+        .options.future = list(seed = TRUE)
+      ) %dofuture% {
         one_boot(i)
       }
-      parallel::stopCluster(cl)
     }
-    se_ <- sd(vals, na.rm=TRUE)
-    ci_ <- quantile(vals, probs=c(0.025, 0.975), na.rm=TRUE)
-    c(Estimate=main_est, Std.Error=se_, CI_Lower=ci_[1], CI_Upper=ci_[2])
+    se_        <- sd(vals, na.rm = TRUE)
+    boot_mean  <- mean(vals, na.rm = TRUE)
+    q          <- quantile(vals, probs = c(0.025, 0.975), na.rm = TRUE)
+    ci_lower   <- main_est - (q[2] - boot_mean)   # bias-corrected
+    ci_upper   <- main_est + (boot_mean - q[1])
+    c(Estimate=main_est, Std.Error=se_, CI_Lower=ci_lower, CI_Upper=ci_upper)
   }
 
   do_jackknife <- function(d, method, covar) {
@@ -471,21 +500,17 @@ fdid <- function(s,
       for (i in seq_len(n)) {
         jvals[i] <- one_jack(i)
       }
+    } else if (use_mclapply) {
+      jvals <- unlist(parallel::mclapply(1:n, one_jack, mc.cores = cores,
+                                         mc.set.seed = TRUE))
     } else {
-      if (!requireNamespace("foreach", quietly=TRUE) ||
-          !requireNamespace("doParallel", quietly=TRUE)) {
-        stop("Parallel requires 'foreach' and 'doParallel' packages.")
-      }
-      cl <- parallel::makeCluster(cores)
-      doParallel::registerDoParallel(cl)
       jvals <- foreach::foreach(
         i = 1:n,
         .combine = c,
-        .export = c("run_method","est_did", "est_ols1", "est_ols2", "est_ebal", "est_aipw", "est_ipw")
-      ) %dopar% {
+        .options.future = list(seed = TRUE)
+      ) %dofuture% {
         one_jack(i)
       }
-      parallel::stopCluster(cl)
     }
     est_mean <- mean(jvals, na.rm=TRUE)
     se_ <- sqrt((n - 1)/n * sum((jvals - est_mean)^2))

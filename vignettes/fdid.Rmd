@@ -1,0 +1,59 @@
+---
+title: "Getting Started with fdid"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started with fdid}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment  = "#>",
+  fig.width  = 7,
+  fig.height = 5
+)
+```
+
+`fdid` implements the Factorial Difference-in-Differences (FDID) framework from
+Xu, Zhao, and Ding (2026). For a full tutorial covering all estimators, plotting
+options, and sensitivity analysis, see the
+[online Quarto book](https://yiqingxu.org/packages/fdid/).
+
+## Quick example
+
+```{r example}
+library(fdid)
+data(fdid)   # loads `mortality`
+
+# Unique unit ID and binary treatment factor
+mortality$uniqueid <- paste(mortality$provid, mortality$countyid, sep = "-")
+mortality$G <- as.integer(mortality$pczupu >= median(mortality$pczupu, na.rm = TRUE))
+
+# Prepare wide-format data
+s <- fdid_prepare(
+  data       = mortality,
+  Y_label    = "mortality",
+  X_labels   = c("avggrain", "nograin", "urban", "dis_bj",
+                 "dis_pc", "rice", "minority", "edu", "lnpop"),
+  G_label    = "G",
+  unit_label = "uniqueid",
+  time_label = "year"
+)
+
+# Estimate
+result <- fdid(s, tr_period = 1958:1961, ref_period = 1957)
+summary(result)
+```
+
+```{r plots, fig.show="hold"}
+plot(result, type = "raw")
+plot(result, type = "dynamic")
+```
+
+## References
+
+Xu, Y., Zhao, S., and Ding, P. (2026). "Factorial Difference-in-Differences."
+*Journal of the American Statistical Association*.
+<https://doi.org/10.1080/01621459.2026.2628343>

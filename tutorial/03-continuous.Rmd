@@ -1,0 +1,80 @@
+# Continuous G {#sec-continuous}
+
+```{r setup-cont, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE, message = FALSE, warning = FALSE)
+```
+
+This chapter demonstrates FDID estimation when the baseline factor $G$ is continuous,
+using `lnpczupu` (log genealogy book density) as the treatment variable.
+
+::: {.callout-note appearance="simple"}
+**Note**: Continuous $G$ currently supports only the linear estimators (`"did"`, `"ols1"`, `"ols2"`).
+Methods that require binary group membership — `"ebal"`, `"ipw"`, `"aipw"` — are not available.
+Support will be extended in future versions.
+:::
+
+## Setup
+
+```{r library-cont}
+library(fdid)
+data(fdid)
+```
+
+```{r data-cont}
+mortality$uniqueid <- paste(as.character(mortality$provid),
+                            as.character(mortality$countyid), sep = "-")
+
+covar      <- c("avggrain", "nograin", "urban", "dis_bj", "dis_pc",
+                "rice", "minority", "edu", "lnpop")
+tr_period  <- 1958:1961
+ref_period <- 1957
+```
+
+Prepare the data using `lnpczupu` as the continuous $G$:
+
+```{r prepare-cont}
+s_cont <- fdid_prepare(
+  data       = transform(mortality, G = lnpczupu),
+  Y_label    = "mortality",
+  X_labels   = covar,
+  G_label    = "G",
+  unit_label = "uniqueid",
+  time_label = "year"
+)
+```
+
+## Estimation
+
+### DID (no covariates)
+
+```{r cont-did}
+result_cont_did <- fdid(s_cont, tr_period = tr_period, ref_period = ref_period,
+                        method = "did")
+summary(result_cont_did)
+```
+
+### OLS without interactions
+
+```{r cont-ols1}
+result_cont_ols1 <- fdid(s_cont, tr_period = tr_period, ref_period = ref_period,
+                         method = "ols1")
+summary(result_cont_ols1)
+```
+
+### OLS with interactions (OLS$_*$)
+
+```{r cont-ols2}
+result_cont_ols2 <- fdid(s_cont, tr_period = tr_period, ref_period = ref_period,
+                         method = "ols2")
+summary(result_cont_ols2)
+```
+
+## Plots
+
+```{r cont-plot-raw}
+plot(result_cont_ols2, type = "raw")
+```
+
+```{r cont-plot-dynamic}
+plot(result_cont_ols2, type = "dynamic")
+```

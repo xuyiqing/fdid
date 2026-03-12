@@ -26,9 +26,10 @@ Recreate the prepared data and define the change-score outcome (mean of famine
 years minus the pre-famine baseline):
 
 ```{r data-sens}
-mortality$uniqueid <- paste(as.character(mortality$provid),
-                            as.character(mortality$countyid), sep = "-")
-mortality$G <- ifelse(mortality$pczupu >= median(mortality$pczupu, na.rm = TRUE), 1, 0)
+mortality$uniqueid  <- paste(as.character(mortality$provid),
+                             as.character(mortality$countyid), sep = "-")
+mortality$G        <- ifelse(mortality$pczupu >= median(mortality$pczupu, na.rm = TRUE), 1, 0)
+mortality$lnpczupu <- log(mortality$pczupu + 1)   # log(x+1) handles the ~45% zero counties
 
 covar <- c("avggrain", "nograin", "urban", "dis_bj", "dis_pc",
            "rice", "minority", "edu", "lnpop")

@@ -208,6 +208,23 @@ fdid <- function(s,
   tmp <- rowMeans(s[, Y_tr_cols_eff, drop = FALSE], na.rm = TRUE)
   s$tempY <- tmp - s[[Y_ref_col]]
 
+  # ----- Parallel backend selector -----
+  # mclapply (fork) is fast on Unix/Mac; multisession is too slow for small
+  # tasks (~4ms/iter) due to IPC overhead. On Windows, fall back to sequential.
+  use_mclapply <- parallel && (.Platform$OS.type == "unix")
+  use_future   <- parallel && !use_mclapply &&
+                    vartype %in% c("bootstrap", "jackknife")
+  if (use_future) {
+    if (!requireNamespace("foreach",  quietly = TRUE) ||
+        !requireNamespace("doFuture", quietly = TRUE) ||
+        !requireNamespace("future",   quietly = TRUE)) {
+      stop("Parallel requires 'foreach', 'doFuture', and 'future' packages.")
+    }
+    future::plan(future::multisession, workers = cores)
+    doFuture::registerDoFuture()
+    on.exit(future::plan(future::sequential), add = TRUE)
+  }
+
   # ----- Estimation Subroutines -----
 
   est_did <- function(d, covar) {
@@ -450,15 +467,11 @@ fdid <- function(s,
       run_method(db, method, covar)["Estimate"]
     }
     if (!parallel) {
-      vals <- replicate(B, one_boot(1), simplify=TRUE)
+      vals <- replicate(B, one_boot(1), simplify = TRUE)
+    } else if (use_mclapply) {
+      vals <- unlist(parallel::mclapply(1:B, one_boot, mc.cores = cores,
+                                        mc.set.seed = TRUE))
     } else {
-      if (!requireNamespace("foreach",  quietly=TRUE) ||
-          !requireNamespace("doFuture", quietly=TRUE) ||
-          !requireNamespace("future",   quietly=TRUE)) {
-        stop("Parallel requires 'foreach', 'doFuture', and 'future' packages.")
-      }
-      future::plan(future::multisession, workers = cores)
-      doFuture::registerDoFuture()
       vals <- foreach::foreach(
         i = 1:B,
         .combine = c,
@@ -466,7 +479,6 @@ fdid <- function(s,
       ) %dofuture% {
         one_boot(i)
       }
-      future::plan(future::sequential)
     }
     se_        <- sd(vals, na.rm = TRUE)
     boot_mean  <- mean(vals, na.rm = TRUE)
@@ -488,14 +500,10 @@ fdid <- function(s,
       for (i in seq_len(n)) {
         jvals[i] <- one_jack(i)
       }
+    } else if (use_mclapply) {
+      jvals <- unlist(parallel::mclapply(1:n, one_jack, mc.cores = cores,
+                                         mc.set.seed = TRUE))
     } else {
-      if (!requireNamespace("foreach",  quietly=TRUE) ||
-          !requireNamespace("doFuture", quietly=TRUE) ||
-          !requireNamespace("future",   quietly=TRUE)) {
-        stop("Parallel requires 'foreach', 'doFuture', and 'future' packages.")
-      }
-      future::plan(future::multisession, workers = cores)
-      doFuture::registerDoFuture()
       jvals <- foreach::foreach(
         i = 1:n,
         .combine = c,
@@ -503,7 +511,6 @@ fdid <- function(s,
       ) %dofuture% {
         one_jack(i)
       }
-      future::plan(future::sequential)
     }
     est_mean <- mean(jvals, na.rm=TRUE)
     se_ <- sqrt((n - 1)/n * sum((jvals - est_mean)^2))

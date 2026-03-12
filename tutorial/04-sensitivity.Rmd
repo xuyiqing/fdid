@@ -92,3 +92,41 @@ to relate to both the treatment and the outcome to explain away the result:
 In this application, the benchmarks cluster far from the t = 0 boundary,
 suggesting the negative effect of low social capital on famine mortality is
 robust to moderate unmeasured confounding.
+
+## Continuous G
+
+Repeat the analysis with `lnpczupu` as a continuous treatment:
+
+```{r sens-continuous}
+mortality$lnpczupu <- log(mortality$pczupu + 1)
+
+s_cont <- fdid_prepare(
+  data       = transform(mortality, G = lnpczupu),
+  Y_label    = "mortality",
+  X_labels   = covar,
+  G_label    = "G",
+  unit_label = "uniqueid",
+  time_label = "year"
+)
+s_cont$chg_mortality <- rowMeans(s_cont[, paste0("Y_", 1958:1961)]) - s_cont$Y_1957
+
+fml_cont <- as.formula(paste("chg_mortality ~ G +", paste(xvars, collapse = " + ")))
+mod_cont  <- lm(fml_cont, data = s_cont)
+
+sens_cont <- sensemakr(
+  model                = mod_cont,
+  treatment            = "G",
+  benchmark_covariates = xvars,
+  kd                   = 1,
+  sensitivity.of       = "t-value"
+)
+summary(sens_cont)
+```
+
+```{r plot-sens-cont, fig.width=6, fig.height=6}
+plot(sens_cont, show.unadjusted = FALSE)
+```
+
+The interpretation mirrors the binary case: benchmark dots well inside the
+t = 0 contour indicate that the protective effect of social capital — measured
+continuously — is robust to moderate unmeasured confounding.

@@ -59,7 +59,7 @@ As in the empirical application of @xu2026factorial, we use the county-year pane
 
 @cao2022clans examines the role of social capital in disaster relief during China’s Great Famine and finds that the rise in the mortality rate during the famine years is significantly less in counties with a higher clan density. In their research design, the event is China’s Great Famine (1958–1961), and the baseline factor $G$ is social capital, measured by the density of genealogy books.
 
-`fdid` ships this long-format panel dataset `mortality`, which works directly with `fdid_prepare()` we'll explain in [Chapter @sec-main]. To load it, run the code chunk below:
+`fdid` ships this long-format panel dataset `mortality`, which works directly with `fdid_prepare()` we'll explain in [Chapter @sec-binary]. To load it, run the code chunk below:
 
 ```{r read_data}
 library(fdid)

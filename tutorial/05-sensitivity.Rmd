@@ -90,7 +90,7 @@ to relate to both the treatment and the outcome to explain away the result:
   observed covariate to nullify the finding.
 
 In this application, the benchmarks cluster far from the t = 0 boundary,
-suggesting the negative effect of low social capital on famine mortality is
+suggesting the moderation effect of high social capital on famine mortality is
 robust to moderate unmeasured confounding.
 
 ## Continuous G
@@ -128,5 +128,5 @@ plot(sens_cont, show.unadjusted = FALSE)
 ```
 
 The interpretation mirrors the binary case: benchmark dots well inside the
-t = 0 contour indicate that the protective effect of social capital — measured
+t = 0 contour indicate that the moderation effect of social capital — measured
 continuously — is robust to moderate unmeasured confounding.

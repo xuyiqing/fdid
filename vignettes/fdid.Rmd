@@ -1,0 +1,138 @@
+---
+title: "Getting Started with fdid"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started with fdid}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment  = "#>",
+  fig.width  = 7,
+  fig.height = 5
+)
+```
+
+This vignette provides a minimal introduction to `fdid` using the China famine
+replication data from Xu, Zhao, and Ding (2026). For a full tutorial — covering
+all estimators, plotting options, and method comparisons — see the
+[online Quarto book](https://yiqingxu.org/packages/fdid/).
+
+## Installation
+
+```{r install, eval=FALSE}
+# CRAN
+install.packages("fdid")
+
+# Development version
+remotes::install_github("xuyiqing/fdid")
+```
+
+## Data
+
+The package ships with county-level mortality data from China (1954–1966). The
+treatment factor `G` is a binary indicator for high social capital (above-median
+genealogy book density, `pczupu`).
+
+```{r data}
+library(fdid)
+data(fdid)   # loads `mortality`
+
+# Create binary treatment and log-transform of pczupu
+mortality$uniqueid <- paste(mortality$provid, mortality$countyid, sep = "-")
+mortality$G        <- as.integer(mortality$pczupu >= median(mortality$pczupu, na.rm = TRUE))
+
+head(mortality[, c("uniqueid", "year", "mortality", "G", "pczupu", "lnpczupu")])
+```
+
+## Prepare data
+
+`fdid_prepare()` reshapes long-format panel data into the wide format required
+by `fdid()`.
+
+```{r prepare}
+covariates <- c("avggrain", "nograin", "urban", "dis_bj",
+                "dis_pc", "rice", "minority", "edu", "lnpop")
+
+s <- fdid_prepare(
+  data       = mortality,
+  Y_label    = "mortality",
+  X_labels   = covariates,
+  G_label    = "G",
+  unit_label = "uniqueid",
+  time_label = "year"
+)
+```
+
+## Estimation
+
+`fdid()` returns pre-treatment, event-period, and post-treatment aggregates
+along with dynamic (year-by-year) estimates.
+
+```{r estimate}
+result <- fdid(s, tr_period = 1958:1961, ref_period = 1957)
+summary(result)
+```
+
+## Visualisation
+
+Raw group means over time:
+
+```{r plot-raw}
+plot(result, type = "raw")
+```
+
+Dynamic (year-by-year) estimates:
+
+```{r plot-dynamic}
+plot(result, type = "dynamic")
+```
+
+Propensity score overlap (requires `method = "ipw"` or `"aipw"`):
+
+```{r plot-overlap}
+result_ipw <- fdid(s, tr_period = 1958:1961, ref_period = 1957, method = "ipw")
+plot(result_ipw, type = "overlap")
+```
+
+## Sensitivity analysis
+
+To assess robustness to omitted confounders, use the
+[`sensemakr`](https://carloscinelli.com/sensemakr/) package directly. The
+approach follows Xu, Zhao, and Ding (2026, Appendix A3):
+
+```{r sensitivity, eval=requireNamespace("sensemakr", quietly = TRUE)}
+library(sensemakr)
+
+# Change-score outcome: mean(famine years) - baseline, using prepared wide data
+# Covariates in s are stored as x1–x9 (matching order of X_labels above)
+s$chg_mortality <- rowMeans(s[, paste0("Y_", 1958:1961)]) - s$Y_1957
+xvars <- paste0("x", 1:9)   # x1=avggrain, x2=nograin, ..., x9=lnpop
+
+fml <- as.formula(paste("chg_mortality ~ G +", paste(xvars, collapse = " + ")))
+mod_sens <- lm(fml, data = s)
+
+sens <- sensemakr(
+  model                = mod_sens,
+  treatment            = "G",
+  benchmark_covariates = xvars,
+  kd                   = 1,
+  sensitivity.of       = "t-value"
+)
+plot(sens, show.unadjusted = FALSE)
+```
+
+Install `sensemakr` from CRAN if needed:
+
+```{r install-sensemakr, eval=FALSE}
+install.packages("sensemakr")
+```
+
+## References
+
+Xu, Y., Zhao, S., and Ding, P. (2026). "Factorial Difference-in-Differences."
+*Journal of the American Statistical Association*.
+<https://doi.org/10.1080/01621459.2026.2628343>

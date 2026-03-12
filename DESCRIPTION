@@ -27,7 +27,11 @@ Imports:
     car,
     sandwich
 Suggests:
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown,
+    sensemakr
+VignetteBuilder: knitr
 Depends: R (>= 3.6.0)
 RoxygenNote: 7.3.3
 NeedsCompilation: no

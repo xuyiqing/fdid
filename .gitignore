@@ -8,3 +8,4 @@
 tutorial/_book/
 tutorial/*_cache/
 tutorial/*_files/
+*.tar.gz

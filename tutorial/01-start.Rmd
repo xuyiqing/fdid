@@ -46,8 +46,8 @@ install_all <- function(packages) {
     }
   }
 }
-packages <- c("estimatr", "dplyr", "tidyr", "rlang", "tidyselect", "RColorBrewer", 
-              "foreach", "doParallel", "ebal", "grf", "car", 
+packages <- c("estimatr", "dplyr", "tidyr", "rlang", "tidyselect", "RColorBrewer",
+              "foreach", "doFuture", "future", "ebal", "grf", "car",
               "sandwich")
 install_all(packages)
 ```

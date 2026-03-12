@@ -10,8 +10,9 @@ book:
     - index.qmd
     - 01-start.Rmd
     - 02-main.Rmd
-    - 03-visualization.Rmd
+    - 03-continuous.Rmd
     - 04-sensitivity.Rmd
+    - 05-visualization.Rmd
     - references.qmd
 
 delete_merged_file: true
@@ -28,8 +29,9 @@ format:
     code-fold: false
     code-tools: true
     code-link: true
-  
+    toc-depth: 3
+
 knitr:
   opts_chunk: 
     collapse: true
-    comment: "#>" 
+    comment: "#>"

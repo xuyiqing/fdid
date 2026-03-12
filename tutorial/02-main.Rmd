@@ -1,4 +1,4 @@
-# FDID Main Program {#sec-main}
+# Binary G {#sec-binary}
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, cache = TRUE, message = FALSE, warning = FALSE)

@@ -15,14 +15,14 @@ install.packages("fdid")
 ```
 
 
-The development version of the `fdid` package can be installed from [Github](https://github.com/xuyiqing/fdid):
+The `main` branch on GitHub tracks the latest stable release. The `dev` branch contains the most up-to-date features but may be more prone to errors.
 
 ```{r installation, eval = FALSE}
-# If not already installed
-install.packages('devtools', repos = 'http://cran.us.r-project.org') 
+# Install stable version from GitHub (same as CRAN)
+devtools::install_github("xuyiqing/fdid")
 
-# Directly install
-devtools::install_github('xuyiqing/fdid')
+# Install the latest development version (may be unstable)
+devtools::install_github("xuyiqing/fdid@dev")
 ```
 
 If you downloaded the source folder and want to install locally, first build a `.tar.gz` file and then install it:
@@ -70,7 +70,7 @@ ls()
 The `mortality` dataset includes 16 variables. The variables are described below.
 
 - Unit and period identifiers: `provid` identifies the province and `countyid` is the id of the county in this province; `year` indicates the period of the variables.
-- Baseline factor in different measurement methods: `pczupu` is the number of genealogy books in a county; `anyzupu` is a binary variable which equals 1 if there's any genealogy book in a county; `zupu` is a discrete variable to differentiate counties with some genealogies (`zupu = 1`) and counties with many genealogies (`zupu = 2`).
+- Baseline factor in different measurement methods: `pczupu` is the number of genealogy books in a county (per capita); `lnpczupu` is its log-transformed version (`log(pczupu + 1)`), used as a continuous treatment; `anyzupu` is a binary variable which equals 1 if there's any genealogy book in a county; `zupu` is a discrete variable to differentiate counties with some genealogies (`zupu = 1`) and counties with many genealogies (`zupu = 2`).
 - Outcome: `mortality` is a county's mortality in a year.
 - Pre-event covariates:
     - `avggrain`: per capita grain production

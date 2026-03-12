@@ -17,13 +17,19 @@ And two S3 methods:
 The user tutorial is structured into the following chapters:
 
 -   [Chapter @sec-start]\
-    This chapter covers installation instructions and introduces the dataset.
+    Installation instructions and dataset description.
 
--   [Chapter @sec-main]\
-    This chapter explains how to prepare the dataset, perform factorial difference-in-differences estimation using several methods and plot the results.
+-   [Chapter @sec-binary]\
+    Data preparation, estimation with binary $G$, and basic plots.
+
+-   [Chapter @sec-continuous]\
+    Estimation with continuous $G$ using linear methods.
+
+-   [Chapter @sec-sensitivity]\
+    Sensitivity analysis for unmeasured confounding using `sensemakr`.
 
 -   [Chapter @sec-visualization]\
-    This chapter explores more various plotting options.
+    Extended visualization options and method comparisons.
 
 ## Contributors
 

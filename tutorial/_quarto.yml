@@ -2,7 +2,7 @@ project:
   type: book
 
 book:
-  title: "fdid -- User Tutorial"
+  title: "fdid -- User Manual"
   sidebar:
     style: docked
     background: light
@@ -11,8 +11,8 @@ book:
     - 01-start.Rmd
     - 02-main.Rmd
     - 03-continuous.Rmd
-    - 04-sensitivity.Rmd
-    - 05-visualization.Rmd
+    - 04-visualization.Rmd
+    - 05-sensitivity.Rmd
     - references.qmd
 
 delete_merged_file: true

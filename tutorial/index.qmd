@@ -25,11 +25,11 @@ The user tutorial is structured into the following chapters:
 -   [Chapter @sec-continuous]\
     Estimation with continuous $G$ using linear methods.
 
--   [Chapter @sec-sensitivity]\
-    Sensitivity analysis for unmeasured confounding using `sensemakr`.
-
 -   [Chapter @sec-visualization]\
     Extended visualization options and method comparisons.
+
+-   [Chapter @sec-sensitivity]\
+    Sensitivity analysis for unmeasured confounding using `sensemakr`.
 
 ## Contributors
 

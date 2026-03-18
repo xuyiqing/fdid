@@ -1,8 +1,8 @@
 Package: fdid
 Type: Package
 Title: Factorial Difference-in-Differences
-Version: 1.0.1
-Date: 2026-03-01
+Version: 1.0.2
+Date: 2026-03-18
 Authors@R:
     c(person("Rivka", "Lipkovitz", email = "rivkal@mit.edu", role = c("aut")),
       person("Enhan", "Liu", email = "enhan@uchicago.edu", role = c("aut")),

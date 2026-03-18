@@ -8,7 +8,7 @@ Authors@R:
       person("Rivka", "Lipkovitz", email = "rivkal@mit.edu", role = c("aut")),
       person("Enhan", "Liu", email = "enhan@uchicago.edu", role = c("aut")))
 Description: Implements the factorial difference-in-differences (FDID) framework for panel data settings where all units are exposed to a universal event but vary in a baseline factor G. Provides support for various estimators; supports robust, bootstrap, and jackknife variance; returns dynamic, pre/event/post aggregates and raw means; and includes helpers for data preparation and plotting. Methodology follows Xu, Zhao and Ding (2026) <doi:10.1080/01621459.2026.2628343>.
-URL: https://github.com/xuyiqing/fdid
+URL: https://yiqingxu.org/packages/fdid/, https://github.com/xuyiqing/fdid
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true

@@ -96,11 +96,9 @@ fdid <- function(s,
       close(tf_con)
     }, add = TRUE)
     sink(tf_con, type = "output"); sink(tf_con, type = "message")
-    old_warn <- getOption("warn"); options(warn = -1)
 
-    out <- ebal::ebalance(Treatment = Treatment, X = X)
+    out <- suppressWarnings(ebal::ebalance(Treatment = Treatment, X = X))
 
-    options(warn = old_warn)
     return(out)
   }
 

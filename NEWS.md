@@ -1,3 +1,7 @@
+# fdid 1.0.2
+
+* Replaced `options(warn = -1)` with `suppressWarnings()` in internal helper `silent_ebalance()` for CRAN compliance (avoids global state modification).
+
 # fdid 0.2.0
 
 * Initial public release.

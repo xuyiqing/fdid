@@ -2,4 +2,5 @@
 ^\.Rproj\.user$
 ^LICENSE\.md$
 ^tutorial$
-
+^architecture\.md$
+^log$
